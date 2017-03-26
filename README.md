@@ -1,0 +1,66 @@
+# Planet War
+Online game that pits players against one another to takeover the planet.
+
+## Core Concepts
+- game is online allowing players to join at the start
+ - players can also join mid game
+- the start of the game defines a certain number of territories for the game
+- players can make the following actions:
+ - invade neutral territories - 3 turns: prepare, travel, settle in
+ - attack (damage target but no invade)- 3 turns: prepare, travel fight, return
+ - invade player territories - 5 turns: prepare, travel, fight, break down resistance, settle in
+ - build up territories - 2 turns: material, build
+ - tear down territories - 1 turn: destroy
+ - spying tactics - varies
+ - diplomatic tactics - varies
+ - artillery tactics - varies
+- types of territory builds are:
+ - cities: population boosts for taxes
+ - farms: for food
+ - industry: building things (armies)
+ - spy centres: spying production
+ - research centres: research production
+ - diplomatics centres: diplomatic production
+ - defence centres: defence against armies and artillery
+- types of army units:
+ - infantry
+ - tanks
+ - jets
+ - bombers
+- a turn happens every X minutes (can be selected during game creation)
+- each turn will process current player actions and queue
+- each turn will allow a player to make an action
+- actions can build up to the game's configured max
+- action order is:
+ - settle in
+ - fight
+ - break down
+ - travel
+ - prepare
+ - build
+ - material
+ - destroy
+ - tactics
+- players can control tax rate
+ - tax rate drives city growth - low tax = high growth
+ - each city has a maximum amount (can be affected with research)
+- industry has a percentage of units produced on next turn
+ - extra goes into income
+- farms develop food up to researched max
+ - starving people 0s growth and reduces population
+- research options
+ - increase effectiveness of cities, farms, industry, spy centres, research centres, diplomatic centres and defence centres
+ - increase effectiveness of army defence and offence (individual units)
+- spy centres
+ - sabotage industry, farm or cities (stop growth/production for X turns)
+ - steal money or research
+- diplomatic
+ - temporarily reduce effectivness of defence/offence
+- artillery
+ - destroy territory builds
+ - destroy population
+
+## Technology
+- mongodb
+- golang
+- angularjs

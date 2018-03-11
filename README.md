@@ -27,20 +27,20 @@ Online game that pits players against one another to takeover the planet.
  - tanks
  - jets
  - bombers
+ - turrets
 - a turn happens every X minutes (can be selected during game creation)
-- each turn will process current player actions and queue
 - each turn will allow a player to make an action
 - actions can build up to the game's configured max
-- action order is:
- - settle in
- - fight
- - break down
- - travel
- - prepare
- - build
- - material
- - destroy
- - tactics
+ - take neutral territories (requires money)
+ - build up territories (requires money) 
+ - attack
+- executing an action will apply
+ - population growth
+ - eating
+ - food
+ - income
+ - army growth
+ - research
 - players can control tax rate
  - tax rate drives city growth - low tax = high growth
  - each city has a maximum amount (can be affected with research)

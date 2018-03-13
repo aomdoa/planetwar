@@ -19,7 +19,8 @@ var UserSchema = new Schema({
     },
     password: {
         type: String,
-        required: 'Password is required'
+        required: 'Password is required',
+        select: false
     }
 })
 UserSchema.plugin(uniqueValidator)

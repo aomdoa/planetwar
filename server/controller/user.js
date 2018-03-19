@@ -1,11 +1,10 @@
 'use strict'
-
 const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
 const User = mongoose.model('Users');
 
 exports.createUser = function(req, res, next) {
-    var user = new User(req.body);
+    var user = new User(req.body)
     return user.save()
         .then((user) => res.json(user))
         .catch((e) => res.json(e))

@@ -8,7 +8,8 @@ const Promise = require('bluebird')
 
 const config = require('./config')
 const User = require('./model/user')
-const UserController = require('./controller/user')
+const Game = require('./model/game')
+const router = require('./router')
 
 mongoose.Promise = Promise;
 mongoose.connect(config.database)
@@ -19,15 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.set('jwtSecret', config.secret)
 
-var router = express.Router()
-router.route('/authenticate')
-    .post(UserController.loginUser)
-router.route('/users')
-    .post(UserController.createUser)
-router.route('/users/:userId')
-    .get(UserController.getUser)
-    .put(UserController.updateUser)
-app.use('/api', router)
+router.setup(express, app)
 
 app.listen(3000, () => console.log('Starting applicaiton'))
 

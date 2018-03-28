@@ -25,10 +25,6 @@ var GameSchema = new Schema({
         ref: 'User',
         required: 'User reference is required for the game'
     },
-    players: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    }],
     configs: [{
         name: String,
         value: String
@@ -50,12 +46,20 @@ GameSchema.pre('validate', function(next) {
 })
 
 GameSchema.methods.setConfig = function(name, value) {
-    console.log(name, value)
     var config = _.find(this.configs, ['name', name])
     if(config) {
-        config.value = value;
+        config.value = value
     } else {
         this.configs.push({name: name, value: value})
+    }
+}
+
+GameSchema.methods.getConfig = function(name, defaultValue) {
+    var config = _.find(this.configs, ['name', name])                                                                
+    if(config) {
+        return config.value
+    } else {
+        return defaultValue
     }
 }
 

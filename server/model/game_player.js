@@ -7,12 +7,12 @@ const Schema = mongoose.Schema
 var GamePlayerSchema = new Schema({
     game: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Game',
+        ref: 'Games',
         required: 'Game reference is required for the game player'
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Player',
+        ref: 'Users',
         required: 'User reference is required for the game player'
     },
     joinedOn: {

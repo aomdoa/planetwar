@@ -9,7 +9,7 @@ const Promise = require('bluebird')
 const config = require('./config')
 const User = require('./model/user')
 const Game = require('./model/game')
-const GamePlayer = require('./model/gameplayer')
+const GamePlayer = require('./model/game_player')
 const router = require('./router')
 
 mongoose.Promise = Promise;

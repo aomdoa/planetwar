@@ -1,6 +1,7 @@
 'use strict'
 const UserController = require('./controller/user')
 const GameController = require('./controller/game')
+const GamePlayerController = require('./controller/game_player')
 
 exports.setup = function(express, app) {
     var router = express.Router()
@@ -19,8 +20,10 @@ exports.setup = function(express, app) {
     router.route('/games/:gameId')
         .get(GameController.getGame)
         .put(GameController.updateGame)
-        .post(GameController.addPlayer)
-        .delete(GameController.remPlayer)
+    router.route('/games/:gameId/players')
+        .get(GamePlayerController.listPlayers)
+        .post(GamePlayerController.addPlayer)
+        .delete(GamePlayerController.remPlayer)
     app.use('/api', router)                                                                                  
     return router
 }

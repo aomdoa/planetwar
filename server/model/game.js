@@ -22,7 +22,7 @@ var GameSchema = new Schema({
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Users',
         required: 'User reference is required for the game'
     },
     configs: [{

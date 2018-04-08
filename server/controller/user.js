@@ -2,18 +2,25 @@
 const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
 const User = mongoose.model('Users');
+const error = require('../error')                                                                                    
 
 exports.createUser = function(req, res, next) {
     var user = new User(req.body)
     return user.save()
         .then((user) => res.json(user))
-        .catch((e) => res.json(e))
+        .catch((e) => error.unhandled(res, e))
 }
 
 exports.getUser = function(req, res, next) {
     return User.findById(req.params.userId)
         .then((user) => res.json(user))
-        .catch((e) => res.json(e))
+        .catch((e) => error.unhandled(res, e))
+}
+
+exports.getMe = function(req, res, next) {
+    return User.findById(req.decoded.id)
+        .then((user) => res.json(user))
+        .catch((e) => error.unhandled(res, e))
 }
 
 exports.updateUser = function(req, res, next) {
@@ -32,26 +39,28 @@ exports.updateUser = function(req, res, next) {
                 .then((user) => res.json(user))
                 .catch((e) => res.json(e))
         })
-        .catch((e) => res.json(e))
+        .catch((e) => error.unhandled(res, e))
 }
 
 exports.loginUser = function(req, res, next) {
-    User.findOne({
+    return User.findOne({
         email: req.body.email,
         password: req.body.password
-    }).then((user) => {
-        if(!user) {
-            setTimeout(function() { res.json({token: null}) }, 2000)
-        } else {
-            var payload = {
-                id: user._id,
-                name: user.name,
-                email: user.email
+    })
+        .then((user) => {
+            if(!user) {
+                setTimeout(function() { res.json({token: null}) }, 2000)
+            } else {
+                var payload = {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email
+                }
+                var token = jwt.sign(payload, req.app.get('jwtSecret'),{ expiresIn: "24d" })
+                res.json({success: true, token: token})
             }
-            var token = jwt.sign(payload, req.app.get('jwtSecret'),{ expiresIn: "24d" })
-            res.json({success: true, token: token})
-        }
-    }).catch((e) => res.json(e))
+        })
+        .catch((e) => error.unhandled(res, e))
 }
 
 exports.checkUser = function(req, res, next) {
@@ -68,10 +77,7 @@ exports.checkUser = function(req, res, next) {
         });
 
     } else {
-        return res.status(403).send({
-            success: false,
-            message: 'No token provided.'
-        });
+        return error.proc(403, 'No token provided')
     }
 }                                                                                                              
 

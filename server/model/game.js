@@ -25,10 +25,50 @@ var GameSchema = new Schema({
         ref: 'Users',
         required: 'User reference is required for the game'
     },
-    configs: [{
-        name: String,
-        value: String
-    }]
+    availableLand: {
+        type: Number,
+        min: 0,
+        default: 5000
+    },
+    startingPlayerConfig: {
+        turns: {
+            type: Number,
+            min: 0,
+            default: 5
+        },
+        money: {
+            type: Number,
+            min: 0,
+            default: 50000
+        },
+        food: {
+            type: Number,
+            min: 0,
+            default: 100
+        },
+        infantry: {
+            type: Number,
+            min: 0,
+            default: 100
+        },
+        land: {
+            type: Number,
+            min: 0,
+            default: 5
+        }
+    },
+    gameConfig: {
+        maxTurns: {
+            type: Number,
+            min: 5,
+            default: 50
+        },
+        timeTurn: {
+            type: Number,
+            min: 1,
+            default: 5
+        }
+    }
 })
 
 GameSchema.pre('save', function(next) {
@@ -44,24 +84,6 @@ GameSchema.pre('validate', function(next) {
     }
     next()
 })
-
-GameSchema.methods.setConfig = function(name, value) {
-    var config = _.find(this.configs, ['name', name])
-    if(config) {
-        config.value = value
-    } else {
-        this.configs.push({name: name, value: value})
-    }
-}
-
-GameSchema.methods.getConfig = function(name, defaultValue) {
-    var config = _.find(this.configs, ['name', name])                                                                
-    if(config) {
-        return config.value
-    } else {
-        return defaultValue
-    }
-}
 
 GameSchema.plugin(uniqueValidator)
 module.exports = mongoose.model('Games', GameSchema);

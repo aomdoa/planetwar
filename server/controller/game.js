@@ -1,28 +1,15 @@
 'use strict'
 const mongoose = require('mongoose')
 const error = require('../error')
-const settings = require('../settings')
 const Game = mongoose.model('Games')
 const GamePlayer = mongoose.model('GamePlayers')
 const ValidationError = mongoose.Error.ValidationError
-
-function processConfigs(game, req) {
-    if(req.body.configs && req.body.configs.length > 0) {
-        req.body.configs.forEach(function(config) {
-            if(config.name && config.value && settings.GAME_CONFIGS.indexOf(config.name) > -1) {
-                game.setConfig(config.name, config.value)
-            }
-        })
-    }
-}
 
 exports.createGame = function(req, res, next) {
     var game = new Game()
     game.name = req.body.name
     game.createdBy = req.decoded.id
     game.status = 'Preparing'
-    game.configs = settings.DEFAULT_GAME_CONFIGS
-    processConfigs(game, req)
     return game.save()
         .then((game) => res.json(game))
         .catch((e) => {
@@ -60,7 +47,6 @@ exports.updateGame = function(req, res, next) {
             if(req.body.name) {
                 game.name = req.body.name
             }
-            processConfigs(game, req)
             return game.save().then((game) => res.json(game))
         })
         .catch((e) => error.unhandled(res, e))

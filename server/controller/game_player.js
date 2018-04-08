@@ -1,12 +1,10 @@
 'use strict'
 const mongoose = require('mongoose')
 const error = require('../error')
-const settings = require('../settings')
 const Game = mongoose.model('Games')
 const GamePlayer = mongoose.model('GamePlayers')
 
 exports.listPlayers = function(req, res, next) {
-    console.log('list')
     return GamePlayer.find({game: { $eq: req.params.gameId } }).populate('user', 'name')
         .then((players) => {
             var gamePlayers = players.map((player) => {
@@ -28,15 +26,24 @@ exports.addPlayer = function(req, res, next) {
             if(!game) {
                 return error.proc(res, 400, "Unable to find game " + req.params.gameId)
             }
+            if(game.availableLand < game.startingPlayerConfig.land) {
+                return error.proc(res, 403, "No further room in game")
+            }
+
+            game.availableLand -= game.startingPlayerConfig.land
+                
             var player = new GamePlayer()
             player.game = game.id
             player.user = req.decoded.id
-            player.turns = game.getConfig(settings.CNAME_START_TURNS, settings.DEFAULT_START_TURNS)
-            player.resources.money = game.getConfig(settings.CNAME_START_MONEY, settings.DEFAULT_START_MONEY)
-            player.resources.food = game.getConfig(settings.CNAME_START_FOOD, settings.DEFAULT_START_FOOD)
-            player.resources.land = game.getConfig(settings.CNAME_START_LAND, settings.DEFAULT_START_LAND)
-            player.army.infantry = game.getConfig(settings.CNAME_START_INFANTRY, settings.DEFAULT_START_INFANTRY)
-            player.save().then((player) => res.json(player))
+            player.turns = game.startingPlayerConfig.turns
+            player.resources.money = game.startingPlayerConfig.money
+            player.resources.food = game.startingPlayerConfig.food
+            player.resources.land = game.startingPlayerConfig.land
+            player.army.infantry = game.startingPlayerConfig.infantry
+            return game.save().then((game) => {
+                console.dir(player)
+                return player.save().then((player) => res.json(player))
+            })
         })
         .catch((e) => error.unhandled(res, e))
 }

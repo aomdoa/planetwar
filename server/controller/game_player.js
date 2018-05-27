@@ -11,7 +11,7 @@ exports.listPlayers = function(req, res, next) {
                 return {
                     _id: player._id,
                     joinedOn: player.joinedOn,
-                    land: (player.resources.land) ? player.resources.land : 0,
+                    land: (player.state.resources.land) ? player.state.resources.land : 0,
                     name: player.user.name
                 }
             })
@@ -36,10 +36,10 @@ exports.addPlayer = function(req, res, next) {
             player.game = game.id
             player.user = req.decoded.id
             player.turns = game.startingPlayerConfig.turns
-            player.resources.money = game.startingPlayerConfig.money
-            player.resources.food = game.startingPlayerConfig.food
-            player.resources.land = game.startingPlayerConfig.land
-            player.army.infantry = game.startingPlayerConfig.infantry
+            player.state.resources.money = game.startingPlayerConfig.money
+            player.state.resources.food = game.startingPlayerConfig.food
+            player.state.resources.land = game.startingPlayerConfig.land
+            player.state.army.infantry = game.startingPlayerConfig.infantry
             return game.save().then((game) => {
                 console.dir(player)
                 return player.save().then((player) => res.json(player))

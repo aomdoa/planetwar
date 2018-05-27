@@ -2,6 +2,7 @@
 const UserController = require('./controller/user')
 const GameController = require('./controller/game')
 const GamePlayerController = require('./controller/game_player')
+const GameTurnController = require('./controller/game_turn')
 
 exports.setup = function(express, app) {
     var router = express.Router()
@@ -28,11 +29,9 @@ exports.setup = function(express, app) {
         .delete(GamePlayerController.remPlayer)
     router.route('/games/:gameId/players/:userId')
         .get(GamePlayerController.getPlayer)
-    /*router.route('/turn/:gameId')
-        .get(GameTurnController.getTurn)
-        .put(GameTurnController.updateTurn)
-        .post(GameTurnController.createTurn)
-        .delete(GameTurnController.cancelTurn)*/
+    router.route('/turn/:gameId')
+        .get(GameTurnController.getTurns)
+        .post(GameTurnController.doTurn)
 
     app.use('/api', router)                                                                                  
     return router

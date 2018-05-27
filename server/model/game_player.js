@@ -1,6 +1,7 @@
 'use strict'
 
 const mongoose = require('mongoose')
+const GpStateSchema = require('./gp_state')
 
 const Schema = mongoose.Schema
 
@@ -16,81 +17,15 @@ var GamePlayerSchema = new Schema({
         required: 'User reference is required for the game player'
     },
     joinedOn: {
-        type: Date
+        type: Date,
+        default: Date.now
     },
     turns: {
         type: Number,
         min: 0,
         default: 1
     },
-    resources: {
-        money: {
-            type: Number,
-            min: 0,
-            default: 0
-        },
-        land: {
-            type: Number,
-            min: 0,
-            default: 0
-        },
-        food: {
-            type: Number,
-            min: 0,
-            default: 0,
-        }
-    },
-    buildings: {
-        cities: {
-            type: Number,
-            min: 0,
-            default: 0
-        },
-        farms: {
-            type: Number,
-            min: 0,
-            default: 0
-        },
-        industry: {
-            type: Number,
-            min: 0,
-            default: 0
-        }
-    },
-    army: {
-        infantry: {
-            type: Number,
-            min: 0,
-            default: 0
-        },
-        tanks: {
-            type: Number,
-            min: 0,
-            default: 0
-        },
-        jets: {
-            type: Number,
-            min: 0,
-            default: 0
-        },
-        bombers: {
-            type: Number,
-            min: 0,
-            default: 0
-        },
-        turrets: {
-            type: Number,
-            min: 0,
-            default: 0
-        }
-    }
-})
-
-GamePlayerSchema.pre('save', function(next) {
-    if(!this.joinedOn) {
-        this.joinedOn = new Date()
-    }
-    next()
+    state: GpStateSchema
 })
 
 GamePlayerSchema.pre('validate', function(next) {

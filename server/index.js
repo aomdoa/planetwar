@@ -10,6 +10,7 @@ const config = require('./config')
 const User = require('./model/user')
 const Game = require('./model/game')
 const GamePlayer = require('./model/game_player')
+const Turn = require('./model/turn')
 const router = require('./router')
 
 mongoose.Promise = Promise;

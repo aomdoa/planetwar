@@ -56,7 +56,7 @@ exports.loginUser = function(req, res, next) {
                     name: user.name,
                     email: user.email
                 }
-                var token = jwt.sign(payload, req.app.get('jwtSecret'),{ expiresIn: "24d" })
+                var token = jwt.sign(payload, req.app.get('jwtSecret'),{ expiresIn: "124d" })
                 res.json({success: true, token: token})
             }
         })
@@ -77,7 +77,7 @@ exports.checkUser = function(req, res, next) {
         });
 
     } else {
-        return error.proc(403, 'No token provided')
+        return error.proc(res, 403, 'No token provided')
     }
 }                                                                                                              
 

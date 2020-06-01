@@ -1,66 +1,63 @@
 # Planet War
-Online game that pits players against one another to takeover the planet.
+Online game that pits players in group world against each other and computer to grow their empires.
 
 ## Core Concepts
-- game is online allowing players to join at the start
- - players can also join mid game
-- the start of the game defines a certain number of territories for the game
-- players can make the following actions:
- - invade neutral territories - 3 turns: prepare, travel, settle in
- - attack (damage target but no invade)- 3 turns: prepare, travel fight, return
- - invade player territories - 5 turns: prepare, travel, fight, break down resistance, settle in
- - build up territories - 2 turns: material, build
- - tear down territories - 1 turn: destroy
- - spying tactics - varies
- - diplomatic tactics - varies
- - artillery tactics - varies
-- types of territory builds are:
- - cities: population boosts for taxes
- - farms: for food
- - industry: building things (armies)
- - spy centres: spying production
- - research centres: research production
- - diplomatics centres: diplomatic production
- - defence centres: defence against armies and artillery
-- types of army units:
- - infantry
- - tanks
- - jets
- - bombers
- - turrets
-- a turn happens every X minutes (can be selected during game creation)
-- each turn will allow a player to make an action
-- actions can build up to the game's configured max
- - take neutral territories (requires money)
- - build up territories (requires money) 
- - attack
-- executing an action will apply
- - population growth
- - eating
- - food
- - income
- - army growth
- - research
-- players can control tax rate
- - tax rate drives city growth - low tax = high growth
- - each city has a maximum amount (can be affected with research)
-- industry has a percentage of units produced on next turn
- - extra goes into income
-- farms develop food up to researched max
- - starving people 0s growth and reduces population
-- research options
- - increase effectiveness of cities, farms, industry, spy centres, research centres, diplomatic centres and defence centres
- - increase effectiveness of army defence and offence (individual units)
-- spy centres
- - sabotage industry, farm or cities (stop growth/production for X turns)
- - steal money or research
-- diplomatic
- - temporarily reduce effectivness of defence/offence
-- artillery
- - destroy territory builds
- - destroy population
+- user creates account for single email address
+	- email address + empire name + emperor name
+- player can join match anytime they wish
+	- players get X turns of protection (no attack other players during this time) based on configuration
 
-## Technology
-- mongodb
-- golang
-- angularjs
+## Game Play
+- turn results
+	- random tax refund
+	- increase in population based on civ territory + happiness
+	- earn money
+		- taxes (tax rate + population)
+		- ore mines (amount of mine land &ast; random number)
+		- tourism (amount of tourism land &ast; random number &ast; happiness)
+	- food generated/grown
+	- food expired/gone bad
+	- feed people based on available food
+		- starve people if necessary (affects initial population)
+	- army increased based on industrial spaces + happiness + money
+- do tax payments payments
+	- armed forces
+	- region support
+	- pay global taxes
+- do food payments
+	- feed army
+	- feed people
+- setup production
+	- troopers - attack/defense
+	- jets - attack/defense
+	- turrets - defense
+	- bombers - attack
+	- tanks - attack
+	- carriers - defense
+- get new land by using attack troops (if needed)
+	- start with a lot of available land that is then filled
+- purchase buildings
+	- coastal - tourism/income
+	- city - population/income
+	- agriculture - food
+	- industrial - production/income
+- generic computer attack/invade
+	- immediate result of the invade based on the type selected
+	- types are variety of strengths/names/results
+	- result is money, food, land w buildings
+- user attack/invade
+	- immediate result based on user defense
+	- essentially the same as computer except based on their strength
+- turn over
+	- turns will be made available every X minutes and the user has up to the game configured max available
+
+## Future Stuff
+ - power generation and support
+	- each territory requires a power type
+	- power can be generated from nuclear, hydro, gas
+	- types have a combination of purchase, ongoing cost, generation etc.
+- technology types to improve troops, land and overall results
+- variety of income land types - e.g. river, desert, mountain, forest, etc
+- different attack types that include weapons of mass destruction
+	- when included need new land/building types to protect against the weapons
+- spying on land targets to get the details results

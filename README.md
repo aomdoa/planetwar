@@ -51,6 +51,14 @@ Online game that pits players in group world against each other and computer to 
 - turn over
 	- turns will be made available every X minutes and the user has up to the game configured max available
 
+## Technologies
+- server
+	- https://www.prisma.io/
+	- https://github.com/prisma/prisma-examples/tree/master/typescript/rest-express
+	- alternative maybe https://github.com/prisma/prisma-examples/tree/master/typescript/rest-nextjs
+- client
+	- https://reactjs.org/
+
 ## Future Stuff
  - power generation and support
 	- each territory requires a power type

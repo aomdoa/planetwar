@@ -6,6 +6,9 @@ Online game that pits players in group world against each other and computer to 
 	- email address + empire name + emperor name
 - player can join match anytime they wish
 	- players get X turns of protection (no attack other players during this time) based on configuration
+- administrator can create/start/manage games
+	- create new game with: max players, starting land, starting money, safe turns
+- turns are based on the user doing the turn - e.g. nothing (except attacks) happens to a user without them doing stuff
 
 ## Game Play
 - turn results
@@ -52,6 +55,7 @@ Online game that pits players in group world against each other and computer to 
 	- turns will be made available every X minutes and the user has up to the game configured max available
 
 ## Technologies
+- full stack example that can likely be used: 
 - server
 	- https://www.prisma.io/
 	- https://github.com/prisma/prisma-examples/tree/master/typescript/rest-express

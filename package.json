@@ -12,7 +12,9 @@
   "author": "David Shurgold <aomdoa@gmail.com>",
   "dependencies": {
     "@prisma/client": "2.0.0-beta.7",
+    "bcrypt": "^4.0.1",
     "isomorphic-unfetch": "^3.0.0",
+    "jsonwebtoken": "^8.5.1",
     "next": "^9.3.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",

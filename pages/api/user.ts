@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { successMessage, failMessage, getCurrentUser } from './shared'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient({
   log: ['query', 'info', 'warn'],

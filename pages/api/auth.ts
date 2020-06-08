@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { successMessage, failMessage, getCurrentUser } from './shared'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { APP_SECRET } from '../config'
 import { getUnpackedSettings } from "http2"
@@ -33,6 +33,8 @@ export default async function handle(req, res) {
    
       console.log(`Maybe logging in user ${JSON.stringify(user)}`)
 
+      console.log(user.password)
+      console.log(String(req.body.password))
       const valid = await bcrypt.compare(String(req.body.password), user.password)
       if (!valid) {
         return failMessage(res, `Unable to find a user with that email '${req.body.email}' and password '${req.body.password}'`)

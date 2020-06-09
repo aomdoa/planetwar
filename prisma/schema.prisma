@@ -7,9 +7,67 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model user {
-  email    String @unique
-  id       Int    @default(autoincrement()) @id
+model User {
+  email    String   @unique
+  id       Int      @default(autoincrement()) @id
   name     String
   password String
+  players  Player[]
+}
+
+model Game {
+  id         Int      @default(autoincrement()) @id
+  name       String   @unique
+  startTurns Int      @default(10)
+  startLand  Int      @default(100)
+  safeTurns  Int      @default(100)
+  turnTime   Int      @default(600)
+  turnsDone  Int      @default(0)
+  gameDone   Int      @default(4320)
+  players    Player[]
+  Turn       Turn[]
+}
+
+model Player {
+  id             Int    @default(autoincrement()) @id
+  name           String
+  user           User   @relation(fields: [userId], references: [id])
+  userId         Int
+  game           Game   @relation(fields: [gameId], references: [id])
+  gameId         Int
+  availableTurns Int
+  currentTurn    Turn   @relation(name: "CurrentTurn", fields: [currentTurnId], references: [id])
+  currentTurnId  Int
+  completedTurns Turn[]
+  @@unique([name, gameId])
+}
+
+model Turn {
+  id              Int      @default(autoincrement()) @id
+  player          Player   @relation(fields: [playerId], references: [id])
+  playerId        Int
+  game            Game     @relation(fields: [gameId], references: [id])
+  gameId          Int
+  createdAt       DateTime @default(now())
+  completedAt     DateTime
+  money           Float
+  food            Int
+  population      Int
+  taxRate         Float
+  landAvail       Int
+  landCoastal     Int
+  landCity        Int
+  landAgriculture Int
+  landIndustrial  Int
+  armyTroopers    Int
+  armyTurrets     Int
+  armyBombers     Int
+  armyTanks       Int
+  armyCarriers    Int
+  genTroopers     Int
+  genTurrents     Int
+  genBombers      Int
+  genTanks        Int
+  genCarriers     Int
+  Player          Player[] @relation("CurrentTurn")
 }

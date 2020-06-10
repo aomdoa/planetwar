@@ -6,7 +6,7 @@ const prisma = new PrismaClient({
   log: ['query', 'info', 'warn'],
 })
 
-const selectFields = { id: true, name: true, email: true }
+const selectFields = { id: true, name: true, isAdmin: true, email: false }
 
 /**
  * Manage the incoming request and direction to the correct underlying message based on the parameter passed through
@@ -28,6 +28,8 @@ export default async function handle(req, res) {
   const user = getCurrentUser(req)
   if (!user) {
     return failMessage(res, `User must be authenticated`)
+  } else if(user.isAdmin === true) {
+    selectFields.email = true
   }
 
   const userId = Number(req.query.id)
@@ -38,7 +40,7 @@ export default async function handle(req, res) {
       return handleGetList(res)
     }
   } else if (req.method === "PUT") {
-    if (user.id !== userId) {
+    if (user.id !== userId && user.isAdmin !== true) {
       return failMessage(res, `Unable to update other user account`)
     } else {
       return handleUpdate(userId, req.body, res)
@@ -101,7 +103,7 @@ async function handleGetList(res) {
 
 /**
  * Handle the creation of a new user based on the data
- * @param data The data to use for creation. name, email and password
+ * @param data The data to use for creation. name, email, password and isAdmin
  * @param res 
  * @return res.json
  */
@@ -113,6 +115,10 @@ async function handleCreate(data, res) {
     return failMessage(res, 'email must be provided for the user')
   } else if(!data.password) {
     return failMessage(res, 'password must be provided for the user')
+  } else if(!data.isAdmin) {
+    data.isAdmin = false
+  } else {
+    data.isAdmin = true
   }
   data.password = await bcrypt.hash(data.password, 10)
 
@@ -147,6 +153,14 @@ async function handleUpdate(id, data, res) {
     if(data.password) {
       user.password = await bcrypt.hash(data.password, 10)
       console.log(`setting the password from ${data.password} to ${user.password}`)
+    }
+    console.log(`data is ${data.isAdmin}`)
+    if(data.isAdmin === false) {
+      user.isAdmin = false
+      console.log("isAdmin is false")
+    } else if(data.isAdmin === true) {
+      user.isAdmin = true
+      console.log("isAdmin is true")
     }
     const updatedUser = await prisma.user.update({
       select: selectFields,

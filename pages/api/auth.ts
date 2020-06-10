@@ -42,7 +42,7 @@ export default async function handle(req, res) {
       delete user.password
 
       const token = jwt.sign(user, APP_SECRET)
-      const returnData = { token: token, user: { id: user.id, name: user.name, email: user.email }}
+      const returnData = { token: token, user: user }
       console.log(`Returning ${JSON.stringify(returnData)}`)
       return successMessage(res, returnData)
   } else {

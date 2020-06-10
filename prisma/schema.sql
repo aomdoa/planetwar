@@ -2,7 +2,8 @@ CREATE TABLE "user" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "email" VARCHAR(255) NOT NULL UNIQUE,
     "name" VARCHAR(255) NOT NULL,
-    "password" VARCHAR(255) NOT NULL
+    "password" VARCHAR(255) NOT NULL,
+    "isAdmin" BOOLEAN
 );
 
 CREATE TABLE "game" (
@@ -31,7 +32,7 @@ CREATE TABLE "turn" (
     "id"                INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "playerId"          INTEGER NOT NULL,
     "gameId"            INTEGER NOT NULL,
-    "createdAt"         TIMESTAMP NOT NULL DEFAULT now(),
+    "createdAt"         TIMESTAMP NOT NULL,
     "completedAt"       TIMESTAMP,
     "money"             FLOAT NOT NULL,
     "food"              INTEGER NOT NULL,

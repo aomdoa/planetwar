@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from '@prisma/client'
 import { successMessage, failMessage, getCurrentUser } from './shared'
 
 const prisma = new PrismaClient({
@@ -11,7 +11,7 @@ const prisma = new PrismaClient({
  * POST games - createGame - { name, number of turns, time between turns }
  * PUT games?id=ID - addPlayer - { playerId }
  * DELETE games?id=ID - set game state to 0 which stops it
- * 
+ *
  * gameData {
  *  id,
  *  name,
@@ -25,27 +25,27 @@ const prisma = new PrismaClient({
  *  gamePlayers - array of gamePlayers that are part of game
  * }
  * @param req
- * @param res 
+ * @param res
  */
 export default async function handle(req, res) {
   const user = getCurrentUser(req)
   if (!user) {
     return failMessage(res, `User must be authenticated`)
-  } 
- 
+  }
+
   const gameId = Number(req.query.id)
   if (req.method === 'POST' && user.isAdmin === true) {
     return handleCreate(req.body, res)
-  } else if(req.method === 'GET') {
+  } else if (req.method === 'GET') {
     if (gameId) {
       return handleGetOne(gameId, res)
     } else {
       return handleGetList(res)
     }
-  } else if(req.method === 'DELETE' && user.isAdmin === true) {
+  } else if (req.method === 'DELETE' && user.isAdmin === true) {
     return handleDelete(gameId, res)
   }
-  return failMessage(res, "Not done yet")
+  return failMessage(res, 'Not done yet')
 }
 
 /**
@@ -69,12 +69,12 @@ async function selectOneGame(gameId) {
 /**
  * Retrieve the list of games in the true state from the database
  * @param res
- * @return standard message with list of game data 
+ * @return standard message with list of game data
  */
 async function handleGetList(res) {
   console.log(`handleGetList`)
   const games = await prisma.game.findMany({
-    where: { state: true }
+    where: { state: true },
   })
   console.dir(games)
   return successMessage(res, games)
@@ -83,7 +83,7 @@ async function handleGetList(res) {
 /**
  * Retrieve the requested game
  * @param gameId The id of the game to load
- * @param res 
+ * @param res
  * @return standard message with the game data
  */
 async function handleGetOne(gameId, res) {
@@ -105,32 +105,35 @@ async function handleGetOne(gameId, res) {
  * Creates the game based on the provided name and rules
  * By default the default rules are used
  * @param data The rules to be set with the game creation
- * @param res 
+ * @param res
  * @return standard message with the created game data
  */
 async function handleCreate(data, res) {
   console.log(`handleCreate ${JSON.stringify(data)}`)
-  if(!data.name) {
+  if (!data.name) {
     return failMessage(res, 'name must be provided for the game')
   }
   const existingNameCount = await prisma.game.count({
     where: {
       name: data.name,
       state: true,
-    }
+    },
   })
   if (existingNameCount > 0) {
-    return failMessage(res, `Active game with name ${data.name} is already running`)
+    return failMessage(
+      res,
+      `Active game with name ${data.name} is already running`
+    )
   }
   data.state = true
 
   try {
     const game = await prisma.game.create({
-      data: data
+      data: data,
     })
     console.log(`returning createdGame ${JSON.stringify(game)}`)
     return successMessage(res, game)
-  } catch(err) {
+  } catch (err) {
     return failMessage(res, err.message)
   }
 }
@@ -138,7 +141,7 @@ async function handleCreate(data, res) {
 /**
  * Sets the game to non-active state
  * @param gameId The id of the game to deactivate
- * @param res 
+ * @param res
  * @return The updated game data
  */
 async function handleDelete(gameId, res) {
@@ -146,8 +149,8 @@ async function handleDelete(gameId, res) {
   try {
     const game = await selectOneGame(gameId)
     const updatedGame = await prisma.game.update({
-      where: {id: game.id },
-      data: {state: false },
+      where: { id: game.id },
+      data: { state: false },
     })
     return successMessage(res, updatedGame)
   } catch (err) {

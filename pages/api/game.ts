@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from '@prisma/client'
 import { successMessage, failMessage, getCurrentUser } from './shared'
 
 const prisma = new PrismaClient({
@@ -10,7 +10,7 @@ const prisma = new PrismaClient({
  * PUT game?id=GAME_ID - turnData - Adds data to the 'current' turn
  * POST game?id=GAME_ID - completeTurn - Completes the current turn - this is where changes are actually applied
  * DELETE game?id=GAME_ID - clearCurrentTurn - Only the non-completed of course
- * 
+ *
  * gamePlayer {
  *  id - the id in the game
  *  name - the name of the country in game
@@ -28,7 +28,7 @@ const prisma = new PrismaClient({
  *      army - amount changed
  *          troopers, turrets, bombers, tanks, carriers
  *      turn description - description of the things that took place (array? maybe)
- *  pastTurns - array of turns 
+ *  pastTurns - array of turns
  *  currentData - the current posted data that's updated based on turn
  *      land - amount of land in country
  *          available - nothing built but available (can be lost)
@@ -54,8 +54,8 @@ const prisma = new PrismaClient({
  *          carriers
  * }
  * @param req
- * @param res 
+ * @param res
  */
 export default async function handle(req, res) {
-    return failMessage(res, "Not done yet")
+  return failMessage(res, 'Not done yet')
 }

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from '@prisma/client'
 import { successMessage, failMessage, getCurrentUser } from './shared'
 import bcrypt from 'bcryptjs'
 
@@ -21,19 +21,19 @@ const selectFields = { id: true, name: true, isAdmin: true, email: false }
  */
 export default async function handle(req, res) {
   console.log(`user.ts handle`)
-  if (req.method === "POST") {
+  if (req.method === 'POST') {
     return handleCreate(req.body, res)
   }
 
   const user = getCurrentUser(req)
   if (!user) {
     return failMessage(res, `User must be authenticated`)
-  } else if(user.isAdmin === true) {
+  } else if (user.isAdmin === true) {
     selectFields.email = true
   }
 
   const userId = Number(req.query.id)
-  if (req.method === "GET") {
+  if (req.method === 'GET') {
     if (userId) {
       if (user.id === userId) {
         console.log(`user is looking self up allow the email`)
@@ -43,7 +43,7 @@ export default async function handle(req, res) {
     } else {
       return handleGetList(res)
     }
-  } else if (req.method === "PUT") {
+  } else if (req.method === 'PUT') {
     if (user.id !== userId && user.isAdmin !== true) {
       return failMessage(res, `Unable to update other user account`)
     } else {
@@ -82,26 +82,26 @@ async function selectOneUser(userId) {
  */
 async function handleGetOne(userId, res) {
   try {
-    const user = await selectOneUser(userId, res)
+    const user = await selectOneUser(userId)
     if (user) {
       return successMessage(res, user)
     } else {
       return failMessage(res, `Could not find user with id ${userId}`)
     }
-  } catch(err) {
+  } catch (err) {
     return failMessage(res, err.message)
   }
 }
 
 /**
  * Retrieves the list of users
- * @param res 
+ * @param res
  * @return res.json Array of users
  */
 async function handleGetList(res) {
   console.log(`handleGetList`)
   const users = await prisma.user.findMany({
-    select: selectFields
+    select: selectFields,
   })
   console.dir(users)
   return successMessage(res, users)
@@ -110,18 +110,18 @@ async function handleGetList(res) {
 /**
  * Handle the creation of a new user based on the data
  * @param data The data to use for creation. name, email, password and isAdmin
- * @param res 
+ * @param res
  * @return res.json
  */
 async function handleCreate(data, res) {
   console.log(`handleCreate ${JSON.stringify(data)}`)
-  if(!data.name) {
+  if (!data.name) {
     return failMessage(res, 'name must be provided for the user')
-  } else if(!data.email) {
+  } else if (!data.email) {
     return failMessage(res, 'email must be provided for the user')
-  } else if(!data.password) {
+  } else if (!data.password) {
     return failMessage(res, 'password must be provided for the user')
-  } else if(!data.isAdmin) {
+  } else if (!data.isAdmin) {
     data.isAdmin = false
   } else {
     data.isAdmin = true
@@ -131,11 +131,11 @@ async function handleCreate(data, res) {
   try {
     const user = await prisma.user.create({
       select: selectFields,
-      data: data
+      data: data,
     })
     console.log(`returning createdUser ${JSON.stringify(user)}`)
     return successMessage(res, user)
-  } catch(err) {
+  } catch (err) {
     return failMessage(res, err.message)
   }
 }
@@ -144,40 +144,42 @@ async function handleCreate(data, res) {
  * Handle the update an user based on the id and data
  * @param id The id of the user to update
  * @param data The data to update for the user
- * @param res 
+ * @param res
  * @return res.json
  */
 async function handleUpdate(id, data, res) {
-    console.log(`handleUpdate ${id} ${JSON.stringify(data)}`)
-    try {
-      const user = await selectOneUser(id)
-      if (data.name) {
-        user.name = data.name
-      }
-      if(data.email) {
-        user.email = data.email
-      }
-      if(data.password) {
-        user.password = await bcrypt.hash(data.password, 10)
-        console.log(`setting the password from ${data.password} to ${user.password}`)
-      }
-      console.log(`data is ${data.isAdmin}`)
-      if(data.isAdmin === false) {
-        user.isAdmin = false
-        console.log("isAdmin is false")
-      } else if(data.isAdmin === true) {
-        user.isAdmin = true
-        console.log("isAdmin is true")
-      }
-
-      const updatedUser = await prisma.user.update({
-        select: selectFields,
-        data: user,
-        where: { id: user.id },
-      })
-      console.log(`returning updatedUser ${JSON.stringify(updatedUser)}`)
-      return successMessage(res, updatedUser)
-    } catch(err) {
-      return failMessage(res, err.message)
+  console.log(`handleUpdate ${id} ${JSON.stringify(data)}`)
+  try {
+    const user = await selectOneUser(id)
+    if (data.name) {
+      user.name = data.name
     }
+    if (data.email) {
+      user.email = data.email
+    }
+    if (data.password) {
+      user.password = await bcrypt.hash(data.password, 10)
+      console.log(
+        `setting the password from ${data.password} to ${user.password}`
+      )
+    }
+    console.log(`data is ${data.isAdmin}`)
+    if (data.isAdmin === false) {
+      user.isAdmin = false
+      console.log('isAdmin is false')
+    } else if (data.isAdmin === true) {
+      user.isAdmin = true
+      console.log('isAdmin is true')
+    }
+
+    const updatedUser = await prisma.user.update({
+      select: selectFields,
+      data: user,
+      where: { id: user.id },
+    })
+    console.log(`returning updatedUser ${JSON.stringify(updatedUser)}`)
+    return successMessage(res, updatedUser)
+  } catch (err) {
+    return failMessage(res, err.message)
+  }
 }

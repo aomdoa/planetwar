@@ -8,7 +8,8 @@ CREATE TABLE "user" (
 
 CREATE TABLE "game" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "name" VARCHAR(255) NOT NULL UNIQUE,
+    "name" VARCHAR(255) NOT NULL,
+    "state" BOOLEAN,
     "startTurns" INTEGER NOT NULL,
     "startLand" INTEGER NOT NULL,
     "safeTurns" INTEGER NOT NULL,

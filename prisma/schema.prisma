@@ -18,7 +18,8 @@ model User {
 
 model Game {
   id         Int      @default(autoincrement()) @id
-  name       String   @unique
+  name       String 
+  state      Boolean  @default(true)
   startTurns Int      @default(10)
   startLand  Int      @default(100)
   safeTurns  Int      @default(100)

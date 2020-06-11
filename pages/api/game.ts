@@ -19,6 +19,7 @@ const prisma = new PrismaClient({
  *  currentTurn - the data that hasn't been posted/commited yet - in progress
  *      id
  *      type - user or attacked
+ *      number - turn number
  *      land - amount of change in land
  *          available, coastal, city, agricultre, industrial
  *      money - amount of money change
@@ -27,6 +28,7 @@ const prisma = new PrismaClient({
  *      army - amount changed
  *          troopers, turrets, bombers, tanks, carriers
  *      turn description - description of the things that took place (array? maybe)
+ *  pastTurns - array of turns 
  *  currentData - the current posted data that's updated based on turn
  *      land - amount of land in country
  *          available - nothing built but available (can be lost)

@@ -213,7 +213,8 @@ async function handleAddPlayer(gameId, user, playerName, res) {
       }
     })
 
-    const createdPlayer = await prisma.player.findOne({
+    const createdPlayer = await prisma.player.update({
+      data: { currentTurn: { connect: { id: turn.id } } },
       where: { id: player.id }
     })
     return successMessage(res, createdPlayer)

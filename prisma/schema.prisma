@@ -22,6 +22,8 @@ model Game {
   state      Boolean  @default(true)
   startTurns Int      @default(10)
   startLand  Int      @default(100)
+  startMoney Int      @default(10000)
+  startFood  Int      @default(1000)
   safeTurns  Int      @default(100)
   turnTime   Int      @default(600)
   turnsDone  Int      @default(0)
@@ -41,7 +43,8 @@ model Player {
   currentTurn    Turn?   @relation(name: "CurrentTurn", fields: [currentTurnId], references: [id])
   currentTurnId  Int?
   completedTurns Turn[]
-  @@unique([name, gameId])
+  @@unique(name: "NameGame", fields: [name, gameId])
+  @@unique(name: "UserGame", fields: [userId, gameId])
 }
 
 model Turn {

@@ -12,6 +12,8 @@ CREATE TABLE "game" (
     "state" BOOLEAN,
     "startTurns" INTEGER NOT NULL,
     "startLand" INTEGER NOT NULL,
+    "startMoney" INTEGER NOT NULL,
+    "startFood" INTEGER NOT NULL,
     "safeTurns" INTEGER NOT NULL,
     "turnTime" INTEGER NOT NULL,
     "turnsDone" INTEGER NOT NULL,

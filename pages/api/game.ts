@@ -57,5 +57,21 @@ const prisma = new PrismaClient({
  * @param res
  */
 export default async function handle(req, res) {
-  return failMessage(res, 'Not done yet')
+  const user = getCurrentUser(req)
+  if (!user) {
+    return failMessage(res, `User must be authenticated`)
+  }
+
+  const gameId = Number(req.query.id)
+  if (req.method === 'GET') {
+    const player = await prisma.player.findOne({
+      where: { UserGame: { userId: user.id, gameId: gameId } },
+      include: { currentTurn: true },
+    })
+
+    console.dir(player)
+    return failMessage(res, player)
+  } else {
+    return failMessage(res, 'Not done yet')
+  }
 }

@@ -38,8 +38,8 @@ model Player {
   game           Game   @relation(fields: [gameId], references: [id])
   gameId         Int
   availableTurns Int
-  currentTurn    Turn   @relation(name: "CurrentTurn", fields: [currentTurnId], references: [id])
-  currentTurnId  Int
+  currentTurn    Turn?   @relation(name: "CurrentTurn", fields: [currentTurnId], references: [id])
+  currentTurnId  Int?
   completedTurns Turn[]
   @@unique([name, gameId])
 }
@@ -52,24 +52,24 @@ model Turn {
   gameId          Int
   createdAt       DateTime @default(now())
   completedAt     DateTime
-  money           Float
-  food            Int
-  population      Int
-  taxRate         Float
-  landAvail       Int
-  landCoastal     Int
-  landCity        Int
-  landAgriculture Int
-  landIndustrial  Int
-  armyTroopers    Int
-  armyTurrets     Int
-  armyBombers     Int
-  armyTanks       Int
-  armyCarriers    Int
-  genTroopers     Int
-  genTurrents     Int
-  genBombers      Int
-  genTanks        Int
-  genCarriers     Int
+  money           Float?   @default(0)
+  food            Int?     @default(0)
+  population      Int?     @default(0)
+  taxRate         Float?   @default(0)
+  landAvail       Int?     @default(0)
+  landCoastal     Int?     @default(0)
+  landCity        Int?     @default(0)
+  landAgriculture Int?     @default(0)
+  landIndustrial  Int?     @default(0)
+  armyTroopers    Int?     @default(0)
+  armyTurrets     Int?     @default(0)
+  armyBombers     Int?     @default(0)
+  armyTanks       Int?     @default(0)
+  armyCarriers    Int?     @default(0)
+  genTroopers     Int?     @default(0)
+  genTurrents     Int?     @default(0)
+  genBombers      Int?     @default(0)
+  genTanks        Int?     @default(0)
+  genCarriers     Int?     @default(0)
   Player          Player[] @relation("CurrentTurn")
 }

@@ -44,6 +44,9 @@ export default async function handle(req, res) {
     }
   } else if (req.method === 'DELETE' && user.isAdmin === true) {
     return handleDelete(gameId, res)
+  } else if (req.method === 'PUT') {
+    const playerName = String(req.body.name)
+    return handleAddPlayer(gameId, user, playerName, res)
   }
   return failMessage(res, 'Not done yet')
 }
@@ -154,6 +157,68 @@ async function handleDelete(gameId, res) {
     })
     return successMessage(res, updatedGame)
   } catch (err) {
+    return failMessage(res, err.message)
+  }
+}
+
+async function handleAddPlayer(gameId, user, playerName, res) {
+  console.log(`handleAddPlayer ${gameId} ${user.id}`)
+  try {
+    const name = String(playerName)
+    if(!name || name.length < 5) {
+      throw new Error(`The name of the player was not provided or is less than 5 characters: ${playerName}`)
+    }
+    const game = await selectOneGame(gameId)
+    if (!game) {
+      throw new Error(`Unable to find a game with id ${gameId}`)
+    }
+    const existingPlayer = await prisma.player.count({
+      where: { gameId: game.id, userId: user.id }
+    })
+    if (existingPlayer > 0) {
+      throw new Error(`Player ${user.name} is already registered with ${game.name}`)
+    }
+    const nameUsed = await prisma.player.count({
+      where: { gameId: game.id, name: name }
+    })
+    if (nameUsed > 0) {
+      throw new Error(`The name '${name}' is already being used in the game`)
+    }
+
+    const player = await prisma.player.create({
+      data: {
+        name: name,
+        user: { connect: { id: user.id } },
+        game: { connect: { id: game.id } },
+        availableTurns: game.startTurns,
+      }
+    })
+
+    const now = new Date()
+    const turn = await prisma.turn.create({
+      data: {
+        player: { connect: { id: player.id } },
+        game: { connect: { id: game.id } },
+        createdAt: now,
+        completedAt: now,
+        money: 1000,
+        food: 1000,
+        taxRate: 15,
+        landAvail: game.startLand,
+        genBombers: 20,
+        genCarriers: 20,
+        genTanks: 20,
+        genTroopers: 20,
+        genTurrents: 20,
+      }
+    })
+
+    const createdPlayer = await prisma.player.findOne({
+      where: { id: player.id }
+    })
+    return successMessage(res, createdPlayer)
+  } catch (err) {
+    console.log(`Error ${err}`)
     return failMessage(res, err.message)
   }
 }

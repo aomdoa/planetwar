@@ -24,7 +24,7 @@ CREATE TABLE "player" (
     "userId" INTEGER NOT NULL,
     "gameId" INTEGER NOT NULL,
     "availableTurns" INTEGER NOT NULL,
-    "currentTurnId" INTEGER NOT NULL,
+    "currentTurnId" INTEGER,
     FOREIGN KEY ("userId") REFERENCES "user"(id),
     FOREIGN KEY ("gameId") REFERENCES "game"(id)
 );

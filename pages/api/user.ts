@@ -29,6 +29,7 @@ export default async function handle(req, res) {
   if (!user) {
     return failMessage(res, `User must be authenticated`)
   } else if (user.isAdmin === true) {
+    console.log(`user is an administrator, return email`)
     selectFields.email = true
   }
 

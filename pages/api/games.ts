@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { successMessage, failMessage, getCurrentUser } from './shared'
+import { isUndefined } from 'util'
 
 const prisma = new PrismaClient({
   log: ['query', 'info', 'warn'],
@@ -45,8 +46,10 @@ export default async function handle(req, res) {
   } else if (req.method === 'DELETE' && user.isAdmin === true) {
     return handleDelete(gameId, res)
   } else if (req.method === 'PUT') {
-    const playerName = String(req.body.name)
-    return handleAddPlayer(gameId, user, playerName, res)
+    if (!req.body.name) {
+      return failMessage(res, 'No name was provided for the player')
+    }
+    return handleAddPlayer(gameId, user, req.body.name, res)
   }
   return failMessage(res, 'Not done yet')
 }
@@ -65,6 +68,10 @@ async function selectOneGame(gameId) {
   const game = await prisma.game.findOne({
     where: { id: gameId },
   })
+  const players = await prisma.player.findMany({
+    where: { gameId: game.id }
+  })
+  game.players = players
   console.dir(game)
   return game
 }
@@ -162,10 +169,10 @@ async function handleDelete(gameId, res) {
 }
 
 async function handleAddPlayer(gameId, user, playerName, res) {
-  console.log(`handleAddPlayer ${gameId} ${user.id}`)
+  console.log(`handleAddPlayer ${gameId} ${user.id} ${playerName}`)
   try {
     const name = String(playerName)
-    if(!name || name.length < 5) {
+    if(name === undefined || name.length < 5) {
       throw new Error(`The name of the player was not provided or is less than 5 characters: ${playerName}`)
     }
     const game = await selectOneGame(gameId)
@@ -191,20 +198,10 @@ async function handleAddPlayer(gameId, user, playerName, res) {
         user: { connect: { id: user.id } },
         game: { connect: { id: game.id } },
         availableTurns: game.startTurns,
-      }
-    })
-
-    const now = new Date()
-    const turn = await prisma.turn.create({
-      data: {
-        player: { connect: { id: player.id } },
-        game: { connect: { id: game.id } },
-        createdAt: now,
-        completedAt: now,
         money: game.startMoney,
         food: game.startFood,
         taxRate: 15,
-        landAvail: game.startLand,
+        lndAvailable: game.startLand,
         genBombers: 20,
         genCarriers: 20,
         genTanks: 20,
@@ -213,11 +210,7 @@ async function handleAddPlayer(gameId, user, playerName, res) {
       }
     })
 
-    const createdPlayer = await prisma.player.update({
-      data: { currentTurn: { connect: { id: turn.id } } },
-      where: { id: player.id }
-    })
-    return successMessage(res, createdPlayer)
+    return successMessage(res, player)
   } catch (err) {
     console.log(`Error ${err}`)
     return failMessage(res, err.message)

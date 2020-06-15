@@ -29,7 +29,6 @@ model Game {
   turnsDone  Int      @default(0)
   gameDone   Int      @default(4320)
   players    Player[]
-  Turn       Turn[]
 }
 
 model Player {

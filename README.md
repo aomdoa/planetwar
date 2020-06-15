@@ -54,6 +54,14 @@ Online game that pits players in group world against each other and computer to 
 - turn over
 	- turns will be made available every X minutes and the user has up to the game configured max available
 
+## Core Turn
+- get updated money, food grown, food lost, population, army prod
+- pay taxes, pay food for army, pay food for people
+- invade land
+- build out land
+- attack players and other territories
+- optional change tax rate and build rates
+
 ## Technologies
 - full stack example that can likely be used: 
 - server

@@ -33,46 +33,102 @@ model Game {
 }
 
 model Player {
+  // Structure elements for the player
   id             Int    @default(autoincrement()) @id
   name           String
   user           User   @relation(fields: [userId], references: [id])
   userId         Int
   game           Game   @relation(fields: [gameId], references: [id])
   gameId         Int
+  // Current general data for player
   availableTurns Int
-  currentTurn    Turn?   @relation(name: "CurrentTurn", fields: [currentTurnId], references: [id])
+  money          Float  @default(0)
+  food           Int    @default(0)
+  population     Int    @default(0)
+  taxRate        Float  @default(15)
+  // Generation rates for types
+  genTroopers    Int    @default(20)
+  genTurrents    Int    @default(20)
+  genBombers     Int    @default(20)
+  genTanks       Int    @default(20)
+  genCarriers    Int    @default(20)
+  // Current land available and usage
+  lndAvailable   Int    @default(0)
+  lndCoastal     Int    @default(0)
+  lndCity        Int    @default(0)
+  lndAgriculture Int    @default(0)
+  lndIndustrial  Int    @default(0)
+  // Current army
+  troopers       Int    @default(0)
+  turrents       Int    @default(0)
+  bombers        Int    @default(0)
+  tanks          Int    @default(0)
+  carriers       Int    @default(0)
+  // Current and completed turns
+  currentTurn    Turn?  @relation(name: "CurrentTurn", fields: [currentTurnId], references: [id])
   currentTurnId  Int?
   completedTurns Turn[]
+  defends        Attack[]
   @@unique(name: "NameGame", fields: [name, gameId])
   @@unique(name: "UserGame", fields: [userId, gameId])
 }
 
 model Turn {
+  // Structure for the turn
   id              Int      @default(autoincrement()) @id
   player          Player   @relation(fields: [playerId], references: [id])
   playerId        Int
-  game            Game     @relation(fields: [gameId], references: [id])
-  gameId          Int
   createdAt       DateTime @default(now())
   completedAt     DateTime
-  money           Float?   @default(0)
-  food            Int?     @default(0)
-  population      Int?     @default(0)
-  taxRate         Float?   @default(0)
-  landAvail       Int?     @default(0)
-  landCoastal     Int?     @default(0)
-  landCity        Int?     @default(0)
-  landAgriculture Int?     @default(0)
-  landIndustrial  Int?     @default(0)
-  armyTroopers    Int?     @default(0)
-  armyTurrets     Int?     @default(0)
-  armyBombers     Int?     @default(0)
-  armyTanks       Int?     @default(0)
-  armyCarriers    Int?     @default(0)
-  genTroopers     Int?     @default(0)
-  genTurrents     Int?     @default(0)
-  genBombers      Int?     @default(0)
-  genTanks        Int?     @default(0)
-  genCarriers     Int?     @default(0)
-  Player          Player[] @relation("CurrentTurn")
+  // Phase one - core turn results
+  popGrowth       Int      @default(0)
+  popTax          Float    @default(0)
+  incomeCoastal   Float    @default(0)
+  incomeCity      Float    @default(0)
+  foodGrown       Int      @default(0)
+  foodLost        Int      @default(0)
+  newTroopers     Int      @default(0)
+  newTurrents     Int      @default(0)
+  newBombers      Int      @default(0)
+  newTanks        Int      @default(0)
+  newCarriers     Int      @default(0)
+  // Phase two - taxes and feeding
+  taxRequired     Float    @default(0)
+  foodArmyReq     Int      @default(0)
+  foodPeopleReq   Int      @default(0)
+  taxPayed        Float    @default(0)
+  foodArmyPayed   Int      @default(0)
+  foodPeoplePayed Int      @default(0)
+  // Phase three - increase and build
+  increaseLand    Int      @default(0)
+  costIncrease    Float    @default(0)
+  bldCoastal      Int      @default(0)
+  bldCity         Int      @default(0)
+  bldAgriculture  Int      @default(0)
+  bldIndustrial   Int      @default(0)
+  costBuild       Float    @default(0)
+  // Phase four - attack
+  attacks         Attack[]
+}
+
+model Attack {
+  id                Int      @default(autoincrement()) @id
+  playerType        Int      //0 == real player, greater is a type
+  turn              Turn     @relation(fields: [turnId], references: [id])
+  turnId            Int
+  tgtPlayer         Player?  @relation(fields: [tgtPlayerId], references: [id])
+  tgtPlayerId       Int?
+  lostTroopers      Int      @default(0)
+  lostBombers       Int      @default(0)
+  lostTanks         Int      @default(0)
+  killedTroopers    Int      @default(0)
+  killedTurrents    Int      @default(0)
+  killedBombers     Int      @default(0)
+  killedTanks       Int      @default(0)
+  killedCarriers    Int      @default(0)
+  gainedAvailLand   Int      @default(0)
+  gainedCostal      Int      @default(0)
+  gainedCity        Int      @default(0)
+  gainedAgriculture Int      @default(0)
+  gainedIndustrial  Int      @default(0)
 }

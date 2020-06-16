@@ -47,7 +47,7 @@ model Player {
   taxRate        Float  @default(15)
   // Generation rates for types
   genTroopers    Int    @default(20)
-  genTurrents    Int    @default(20)
+  genTurrets     Int    @default(20)
   genBombers     Int    @default(20)
   genTanks       Int    @default(20)
   genCarriers    Int    @default(20)
@@ -59,7 +59,7 @@ model Player {
   lndIndustrial  Int    @default(0)
   // Current army
   troopers       Int    @default(0)
-  turrents       Int    @default(0)
+  turrets        Int    @default(0)
   bombers        Int    @default(0)
   tanks          Int    @default(0)
   carriers       Int    @default(0)
@@ -78,27 +78,29 @@ model Turn {
   player          Player   @relation(fields: [playerId], references: [id])
   playerId        Int
   createdAt       DateTime @default(now())
-  completedAt     DateTime
-  // Phase one - core turn results
+  completedAt     DateTime? // Set at the COMPLETE time and removed from active
+  currentPhase    Int      @default(0) //0 = START, 1 = PAYMENT, 2 = BUILD, 3 = ATTACK, 4 = CHANGE, 5 = COMPLETE
+  // Phase one - core turn results - START
   popGrowth       Int      @default(0)
   popTax          Float    @default(0)
   incomeCoastal   Float    @default(0)
   incomeCity      Float    @default(0)
+  incomeIndustrial Float   @default(0)
   foodGrown       Int      @default(0)
   foodLost        Int      @default(0)
   newTroopers     Int      @default(0)
-  newTurrents     Int      @default(0)
+  newTurrets      Int      @default(0)
   newBombers      Int      @default(0)
   newTanks        Int      @default(0)
   newCarriers     Int      @default(0)
-  // Phase two - taxes and feeding
+  // Phase two - taxes and feeding - PAYMENT
   taxRequired     Float    @default(0)
   foodArmyReq     Int      @default(0)
   foodPeopleReq   Int      @default(0)
-  taxPayed        Float    @default(0)
-  foodArmyPayed   Int      @default(0)
-  foodPeoplePayed Int      @default(0)
-  // Phase three - increase and build
+  taxPaid         Float    @default(0)
+  foodArmyPaid    Int      @default(0)
+  foodPeoplePaid  Int      @default(0)
+  // Phase three - increase and build - BUILD
   increaseLand    Int      @default(0)
   costIncrease    Float    @default(0)
   bldCoastal      Int      @default(0)
@@ -106,8 +108,9 @@ model Turn {
   bldAgriculture  Int      @default(0)
   bldIndustrial   Int      @default(0)
   costBuild       Float    @default(0)
-  // Phase four - attack
+  // Phase four - ATTACK
   attacks         Attack[]
+  // Phase five - CHANGE - player details
 }
 
 model Attack {
@@ -121,7 +124,7 @@ model Attack {
   lostBombers       Int      @default(0)
   lostTanks         Int      @default(0)
   killedTroopers    Int      @default(0)
-  killedTurrents    Int      @default(0)
+  killedTurrets     Int      @default(0)
   killedBombers     Int      @default(0)
   killedTanks       Int      @default(0)
   killedCarriers    Int      @default(0)

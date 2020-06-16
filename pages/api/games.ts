@@ -206,7 +206,7 @@ async function handleAddPlayer(gameId, user, playerName, res) {
         genCarriers: 20,
         genTanks: 20,
         genTroopers: 20,
-        genTurrents: 20,
+        genTurrets: 20,
       }
     })
 

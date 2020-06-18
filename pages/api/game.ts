@@ -53,6 +53,12 @@ export default async function handle(req, res) {
       return startTurn(res, req.body, player)
     } else if (phase ===  TURN_CONFIG.PAYMENT) {
       return paymentTurn(res, req.body, player)
+    } else if (phase === TURN_CONFIG.BUILD) {
+      return buildTurn(res, req.body, player)
+    } else if (phase === TURN_CONFIG.ATTACK) {
+      return attackTurn(res, req.body, player)
+    } else if (phase === TURN_CONFIG.CHANGE) {
+      return completeTurn(res, req.body, player)
     } else {
       return failMessage(res, `Unknown phase ${phase}`)
     }
@@ -72,6 +78,8 @@ async function startTurn(res, data, player:Player) {
   if (player.population + popGrowth > maxPopulation) {
     popGrowth = maxPopulation - player.population
     player.population = maxPopulation
+  } else {
+    player.population = player.population + popGrowth
   }
 
   //Income management
@@ -197,4 +205,177 @@ async function paymentTurn(res, data, player:Player) {
     include: { currentTurn: true }
   })
   return successMessage(res, updatedPlayer)
+}
+
+async function buildTurn(res, data, player:Player) {
+  if (player.currentTurnId === 0 || player.currentTurnId === null) {
+    return failMessage(res, `Turn is not currently in progress`)
+  }
+  if (player.currentTurn.currentPhase !== TURN_CONFIG.BUILD) {
+    return failMessage(res, `Turn is not in build phase it is in ${player.currentTurn.currentPhase}`)
+  }
+
+  const increaseLand = Number(data.increaseLand)
+  if (!(increaseLand >= 0)) {
+    return failMessage(res, `The increase land value provided is not valid and must be 0 or greater. Value was ${increaseLand}`)
+  }
+  const costLand = data.increaseLand * GAME_CONFIG.INCREASE_LAND_COST
+
+  const bldCoastal = Number(data.bldCoastal)
+  if (!(bldCoastal >= 0)) {
+    return failMessage(res, `The costal build value provided is not valid and must be 0 or greater. Value was ${bldCoastal}`)
+  }
+  const costCoastal = bldCoastal * GAME_CONFIG.BUILD_COASTAL_COST
+  const bldCity = Number(data.bldCity)
+  if (!(bldCity >= 0)) {
+    return failMessage(res, `The city build value provided is not valid and must be 0 or greater. Value was ${bldCity}`)
+  }
+  const costCity = bldCity * GAME_CONFIG.BUILD_CITY_COST
+  const bldAgriculture = Number(data.bldAgriculture)
+  if (!(bldAgriculture >= 0)) {
+    return failMessage(res, `The agriculture build value provided is not valid and must be 0 or greater. Value was ${bldAgriculture}`)
+  }
+  const costAgriculture = bldAgriculture * GAME_CONFIG.BUILD_AGRICULTURE_COST
+  const bldIndustrial = Number(data.bldIndustrial)
+  if (!(bldIndustrial >= 0)) {
+    return failMessage(res, `The costal build value provided is not valid and must be 0 or greater. Value was ${bldIndustrial}`)
+  }
+  const costIndustrial = bldIndustrial * GAME_CONFIG.BUILD_INDUSTRIAL_COST
+
+  const totalCost = costCoastal + costCity + costAgriculture + costIndustrial
+  if ((costLand + totalCost) > player.money) {
+    return failMessage(res, `The build cost is ${totalCost} which is greater than the available money of ${player.money}`)
+  }
+  const totalLand = bldAgriculture + bldCity + bldCoastal + bldIndustrial
+  if (totalLand > player.lndAvailable) {
+    return failMessage(res, `The purchased land ${totalLand} is greater than the available land ${player.lndAvailable}`)
+  }
+
+  const turn = await prisma.turn.update({
+    data: {
+      currentPhase: TURN_CONFIG.ATTACK,
+      increaseLand: increaseLand,
+      costIncrease: costLand,
+      bldCoastal: bldCoastal,
+      bldCity: bldCity,
+      bldAgriculture: bldAgriculture,
+      bldIndustrial: bldIndustrial,
+      costBuild: totalCost
+    },
+    where: { id: player.currentTurnId }
+  })
+
+  const updatedPlayer = await prisma.player.update({
+    data: {
+      currentTurn: { connect: { id: turn.id } },
+      money: player.money - (costLand + totalCost),
+      lndAvailable: player.lndAvailable + increaseLand - totalLand,
+      lndCoastal: player.lndCoastal + bldCoastal,
+      lndCity: player.lndCity + bldCity,
+      lndAgriculture: player.lndAgriculture + bldAgriculture,
+      lndIndustrial: player.lndIndustrial + bldIndustrial
+    },
+    where: { id: player.id },
+    include: { currentTurn: true }
+  })
+
+  return successMessage(res, updatedPlayer)
+}
+
+async function attackTurn(res, data, player:Player) {
+  if (player.currentTurnId === 0 || player.currentTurnId === null) {
+    return failMessage(res, `Turn is not currently in progress`)
+  }
+  if (player.currentTurn.currentPhase !== TURN_CONFIG.ATTACK) {
+    return failMessage(res, `Turn is not in attack phase it is in ${player.currentTurn.currentPhase}`)
+  }
+
+  //TODO: Add the actual attack support
+  console.log(`Ignoring attack options`)
+
+  const turn = await prisma.turn.update({
+    data: {
+      currentPhase: TURN_CONFIG.CHANGE
+    },
+    where: { id: player.currentTurnId }
+  })
+
+  const updatedPlayer = await prisma.player.update({
+    data: {
+      currentTurn: { connect: { id: turn.id } },
+    },
+    where: { id: player.id },
+    include: { currentTurn: true }
+  })
+  return successMessage(res, updatedPlayer)
+}
+
+async function completeTurn(res, data, player:Player) {
+  if (player.currentTurnId === 0 || player.currentTurnId === null) {
+    return failMessage(res, `Turn is not currently in progress`)
+  }
+  /*if (player.currentTurn.currentPhase !== TURN_CONFIG.CHANGE) {
+    return failMessage(res, `Turn is not in complete phase it is in ${player.currentTurn.currentPhase}`)
+  }*/
+
+  const taxRate = Number(data.taxRate)
+  if (taxRate >= 0 && taxRate <= 100) {
+    player.taxRate = taxRate
+  }
+
+  if (data.genTroopers || data.genTurrets || data.genBombers || data.genTanks || data.genCarriers) {
+    const genTroopers = Number(data.genTroopers)
+    const genTurrets = Number(data.genTurrets)
+    const genBombers = Number(data.genBombers)
+    const genTanks = Number(data.genTanks)
+    const genCarriers = Number(data.genCarriers)
+    if (!(genTroopers >= 0) || !(genTroopers <= 100)) {
+      return failMessage(res, `The troop generation must have a value from 0 to 100. The value of ${genTroopers} is invalid`)
+    }
+    if (!(genTurrets >= 0) || !(genTurrets <= 100)) {
+      return failMessage(res, `The turret generation must have a value from 0 to 100. The value of ${genTurrets} is invalid`)
+    }
+    if (!(genBombers >= 0) || !(genBombers <= 100)) {
+      return failMessage(res, `The bomber generation must have a value from 0 to 100. The value of ${genBombers} is invalid`)
+    }
+    if (!(genTanks >= 0) || !(genTanks <= 100)) {
+      return failMessage(res, `The tank generation must have a value from 0 to 100. The value of ${genTanks} is invalid`)
+    }
+    if (!(genCarriers >= 0) || !(genCarriers <= 100)) {
+      return failMessage(res, `The carrier generation must have a value from 0 to 100. The value of ${genCarriers} is invalid`)
+    }
+    if((genTroopers + genTurrets + genBombers + genTanks + genCarriers) > 100) {
+      return failMessage(res, `The troop generation cannot be greater than 100 in total`)
+    }
+
+    player.genTroopers = genTroopers
+    player.genTurrets = genTurrets
+    player.genBombers = genBombers
+    player.genTanks = genTanks
+    player.genCarriers = genCarriers
+  }
+  const now = new Date()
+  const turn = await prisma.turn.update({
+    data: {
+      currentPhase: TURN_CONFIG.COMPLETE,
+      completedAt: now
+    },
+    where: { id: player.currentTurnId }
+  })
+
+  const updatedPlayer = await prisma.player.update({
+    data: {
+      currentTurn: { disconnect: true },
+      availableTurns: player.availableTurns - 1,
+      taxRate: player.taxRate,
+      genTroopers: player.genTroopers,
+      genTurrets: player.genTurrets,
+      genBombers: player.genBombers,
+      genTanks: player.genTanks,
+      genCarriers: player.genCarriers
+    },
+    where: { id: player.id }
+  })
+  return successMessage(res, updatedPlayer)
+
 }

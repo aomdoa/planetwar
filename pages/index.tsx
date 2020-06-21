@@ -1,5 +1,5 @@
 import React from 'react'
-import Router from 'next/router'
+import Link from 'next/link'
 import { GetServerSideProps } from 'next'
 import Layout from '../components/Layout'
 
@@ -16,7 +16,7 @@ const Index : React.FC<Props> = props => {
         <p>Auth and stuff we'll get figured out later</p>
         <main>
         {props.games.map(game => (
-          <div>Game #{game.id}: <a href="#" onClick={() => Router.push('/game?id=[id]', `/game?id=${game.id}`)}>{game.name}</a></div>
+          <div>Game #{game.id}: {game.name} - Operations: Stats - (Join or <Link href="/game?id=[gameId]" as={`/game?id=${game.id}`}>Play</Link>)</div>
         ))}
         </main>
       </div>

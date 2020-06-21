@@ -19,18 +19,21 @@ const Game : React.FC<Props> = props => {
       'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFvbWRvYUBnbWFpbC5jb20iLCJpZCI6MSwibmFtZSI6ImFvbWRvYSIsImlzQWRtaW4iOnRydWUsImlhdCI6MTU5MTgzMTY4NX0.-uXAxUKYUXJj681WlnfDmuOQmak902tXugOAGaoDsCs'
     }
   }).then(_ => _.json()).then(_ => _.data)
-  const { data, error } = useSWR('http://localhost:3000/api/game?id=1', getData, { initialData })
+  const { data, error } = useSWR('/api/game?id=1', getData, { initialData })
 
   return (
     <Layout>
       <div>
         <h2>game</h2>
         <p>Country Name: {data.name}</p>
-        <p>Available Turns: {data.availableTurns}</p>
-        <p>Population: {data.population}</p>
-        <p>Money: {data.money}</p>
         <table>
           <tbody>
+            <tr>
+              <td>Population</td>
+              <td>{data.population}</td>
+              <td>Money</td>
+              <td>{data.money}</td>
+            </tr>
           <tr>
             <td>Available Land</td>
             <td>{data.lndAvailable}</td>
@@ -68,15 +71,41 @@ const Game : React.FC<Props> = props => {
           </tr>
           </tbody>
         </table>
-        <div>
-          <button>Take Turn</button>
-
-          Interaction zone that contains the steps for each turn with the submission.
+        <div className="recentAction">
+          Recent actions and results with scrollbar of what's been doing. Latest at top and messages simply added
+          Fake message to test<br />
+          Fake message to test<br />
+          Fake message to test<br />
+          Fake message to test<br />
+          Fake message to test<br />
+          Fake message to test<br />
+          Fake message to test<br />
+          Fake message to test<br />
+          Fake message to test<br />
+          Fake message to test<br />
+          Fake message to test<br />
         </div>
-        <div>
-          Recent actions zone line by line
+        <div className="currentTurn">
+          <button>Take Turn {data.availableTurns}</button><br />
+          Take turn will do the initial call to get the results which are displayed and the form will be available for the user to enter and submit. Future will have
+          the scrolling stuff but that's future.<br />
+          Form stays in same spot with results above actually.
         </div>
       </div>
+      <style jsx>{`
+      .recentAction {
+        height: 160px;
+        border: 1px solid black;
+        overflow-y: scroll;
+        margin: 1em;
+      }
+
+      .currentTurn {
+        border: 1px solid black;
+        margin: 1em;
+        margin-top: 0;
+      }
+      `}</style>
     </Layout>
   )
 }

@@ -2,11 +2,11 @@ import jwt from 'jsonwebtoken'
 import { APP_SECRET } from '../config'
 
 export function successMessage(res, message) {
-  return res.json({ success: true, data: message })
+  return res.json({ success: true, result: message })
 }
 
 export function failMessage(res, message) {
-  return res.json({ success: false, data: message })
+  return res.json({ success: false, result: message })
 }
 
 export function getCurrentUser(req) {

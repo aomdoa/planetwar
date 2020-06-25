@@ -37,7 +37,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
   const response = await res.json()
   //TODO: Add check for success
   return {
-    props: { 'games': response.data }
+    props: { 'games': response.result }
   }
 }
 

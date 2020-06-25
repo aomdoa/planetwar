@@ -22,7 +22,6 @@ const getGamesData = (gameId) => {
 
 const getPlayerData = (gameId) => {
   const { data, error } = useSWR(`http://localhost:3000/api/game?id=${gameId}`, getData)
-  console.dir(data)
   return data
 }
 
@@ -47,6 +46,8 @@ const Game : React.FC<Props> = props => {
               <td>{playerData.population}</td>
               <td>Money</td>
               <td>{playerData.money}</td>
+              <td>Food</td>
+              <td>{playerData.food}</td>
               <td>Available Land</td>
               <td>{playerData.lndAvailable}</td>
             </tr>
@@ -84,6 +85,7 @@ const Game : React.FC<Props> = props => {
           <div>{gameData.name}</div>
         </div>
         <div className="recentAction">
+          {actionDisplay(gameData, playerData)}
         </div>
         <div className="currentTurn">
           {turnDisplay(gameData, playerData)}
@@ -127,7 +129,6 @@ export const startTurn = async (gameId) => {
   const data = await result.json()
   headers.method = 'GET'
   if (data.success) {
-    console.log('will do stuff')
     mutate(`http://localhost:3000/api/game?id=${gameId}`, data.result, false)
     console.log('did stuff')
   } else {
@@ -154,12 +155,83 @@ export const reloadTurn = async (gameId) => {
 
 }
 
+const submitInitial = async (gameId, currentTurn) => {
+  console.log('submitInitial')
+  let headers = HEADERS
+  headers.method = 'POST'
+  headers.body = JSON.stringify({
+    phase: 1,
+    taxPaid: (currentTurn.taxPaid === 0) ? currentTurn.taxRequired : currentTurn.taxPaid,
+    foodArmyPaid: (currentTurn.foodArmyPaid === 0) ? currentTurn.foodArmyReq : currentTurn.foodArmyPaid,
+    foodPeoplePaid: (currentTurn.foodPeoplePaid === 0) ? currentTurn.foodPeopleReq : currentTurn.foodPeoplePaid
+  })
+  const result = await fetch(`http://localhost:3000/api/game?id=${gameId}`, headers)
+  const data = await result.json()
+  headers.method = 'GET' //TODO: HACK - figure out the proper header usage
+
+  if (data.success) {
+    console.log('SUCCESS')
+    mutate(`http://localhost:3000/api/game?id=${gameId}`, data)
+  } else {
+    window.alert(data.result)
+  }
+}
+
+
 export const turnDisplay = (gameData, turnData) => {
   if (turnData.currentTurnId === null) {
     return <button onClick={() => startTurn(gameData.id)}>Take Turn {turnData.availableTurns}</button>
+  }
+  const currentTurn = turnData.currentTurn
+  if(currentTurn.currentPhase === 1) { //INITIAL
+console.log(`PEOPLE FOOD ${currentTurn.foodPeoplePaid}`)
+    return (
+      <div>
+          <div>Tax Required: <input onChange={e => currentTurn.taxPaid = e.target.value} type="text" defaultValue={currentTurn.taxRequired} /></div>
+          <div>People Food Required: <input onChange={e => currentTurn.foodPeoplePaid = e.target.value} type="text" defaultValue={currentTurn.foodPeopleReq} /></div>
+          <div>Army Food Required: <input onChange={e => currentTurn.foodArmyPaid = e.target.value } type="text" defaultValue={currentTurn.foodArmyReq} /></div>
+          <div><input type="button" value="Submit" onClick={() => submitInitial(gameData.id, currentTurn)} /></div>
+      </div>
+    )
   } else {
     return <button onClick={() => reloadTurn(gameData.id)}>IN TURN HACK</button>
   }
+}
+
+export const actionDisplay = (gameData, turnData) => {
+  if (turnData.currentTurnId === null) {
+    return <p>Turn not started yet...</p>
+  }
+  const currentTurn = turnData.currentTurn
+  let builtItems = []
+  if (currentTurn.newTroopers > 0) {
+    builtItems.push(`${currentTurn.newTroopers} troopers`)
+  }
+  if (currentTurn.newTurrets > 0) {
+    builtItems.push(`${currentTurn.newTurrets} turrets`)
+  }
+  if (currentTurn.newBombers > 0) {
+    builtItems.push(`${currentTurn.newBombers} bombers`)
+  }
+  if (currentTurn.newTanks > 0) {
+    builtItems.push(`${currentTurn.newTanks} tanks`)
+  }
+  if (currentTurn.newCarriers > 0) {
+    builtItems.push(`${currentTurn.newCarriers} carriers`)
+  }
+
+  return (
+    <div>
+      <ul>
+       {currentTurn.popGrowth > 0 && (<li>Population growth of {currentTurn.popGrowth} people</li>)}
+       {currentTurn.popTax > 0 && (<li>Tax income of ${currentTurn.popTax}</li>)}
+       {currentTurn.incomeCoastal > 0 && (<li>Coastal income of ${currentTurn.incomeCoastal}</li>)}
+       {currentTurn.incomeIndustrial > 0 && (<li>Industrial income of ${currentTurn.incomeIndustrial}</li>)}
+       <li>Grew {currentTurn.foodGrown} pieces and lost {currentTurn.foodLost} pieces of food</li>
+       <li>Built {builtItems.join(', ')}</li>
+      </ul>
+    </div>
+  )
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {

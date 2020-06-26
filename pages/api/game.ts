@@ -43,8 +43,6 @@ export default async function handle(req, res) {
     return failMessage(res, `Unable to find an active player with id ${user.id} in game ${gameId}`)
   }
 
-  console.dir(player)
-
   if (req.method === 'GET') {
     return successMessage(res, player)
   } else if (req.method === 'POST') {
@@ -314,13 +312,17 @@ async function completeTurn(res, data, player:Player) {
   if (player.currentTurnId === 0 || player.currentTurnId === null) {
     return failMessage(res, `Turn is not currently in progress`)
   }
-  /*if (player.currentTurn.currentPhase !== TURN_CONFIG.CHANGE) {
+  if (player.currentTurn.currentPhase !== TURN_CONFIG.CHANGE) {
     return failMessage(res, `Turn is not in complete phase it is in ${player.currentTurn.currentPhase}`)
-  }*/
+  }
 
-  const taxRate = Number(data.taxRate)
-  if (taxRate >= 0 && taxRate <= 100) {
-    player.taxRate = taxRate
+  if (data.taxRate.length > 0) {
+    const taxRate = Number(data.taxRate)
+    if (taxRate > 0 && taxRate <= 100) {
+      player.taxRate = taxRate
+    } else {
+      return failMessage(res, `The tax rate of ${data.taxRate} needs to be valid number from 1 to 100`)
+    }
   }
 
   if (data.genTroopers || data.genTurrets || data.genBombers || data.genTanks || data.genCarriers) {
@@ -354,6 +356,7 @@ async function completeTurn(res, data, player:Player) {
     player.genTanks = genTanks
     player.genCarriers = genCarriers
   }
+
   const now = new Date()
   const turn = await prisma.turn.update({
     data: {
@@ -377,5 +380,4 @@ async function completeTurn(res, data, player:Player) {
     where: { id: player.id }
   })
   return successMessage(res, updatedPlayer)
-
 }

@@ -31,7 +31,8 @@ const Game : React.FC<Props> = props => {
   const playerData = getPlayerData(props.gameId)
   if(!gameData || !playerData) {
     return <div>loading</div>
-  } 
+  }
+
   return (
     <Layout>
       <div>
@@ -82,7 +83,7 @@ const Game : React.FC<Props> = props => {
           </tbody>
         </table>
         <div>
-          <div>{gameData.name}</div>
+          <div>You have {playerData.availableTurns} turns available</div>
         </div>
         <div className="recentAction">
           {actionDisplay(gameData, playerData)}
@@ -119,64 +120,68 @@ const Game : React.FC<Props> = props => {
   )
 }
 
-export const startTurn = async (gameId) => {
-  //TODO: Update for proper execution
-  console.log(`startTurn: ${gameId}`)
+const processTurn = async (gameId, submitData) => {
+  console.log('processTurn')
   let headers = HEADERS
   headers.method = 'POST'
-  headers.body = '{"phase": 0}'
-  const result = await fetch(`http://localhost:3000/api/game?id=${gameId}`, headers)
-  const data = await result.json()
-  headers.method = 'GET'
-  if (data.success) {
-    mutate(`http://localhost:3000/api/game?id=${gameId}`, data.result, false)
-    console.log('did stuff')
-  } else {
-    console.log('fail!')
-    window.alert('Unfortunately an error')
-  }
-}
-
-export const reloadTurn = async (gameId) => {
-  console.log('reloadTurn - working as expected')
-  let headers = HEADERS
-  headers.method = 'POST'
-  headers.body = '{"phase": 99}'
+  headers.body = JSON.stringify(submitData)
   const result = await fetch(`http://localhost:3000/api/game?id=${gameId}`, headers)
   const data = await result.json()
   headers.method = 'GET' //TODO: HACK - figure out the proper header usage
 
   if (data.success) {
     console.log('SUCCESS')
-    mutate(`http://localhost:3000/api/game?id=${gameId}`, data)
+    mutate(`http://localhost:3000/api/game?id=${gameId}`, data.result)
   } else {
     window.alert(data.result)
   }
+}
 
+export const startTurn = async (gameId) => {
+  await processTurn(gameId, {
+    phase: 0
+  })
 }
 
 const submitInitial = async (gameId, currentTurn) => {
-  console.log('submitInitial')
-  let headers = HEADERS
-  headers.method = 'POST'
-  headers.body = JSON.stringify({
+  await processTurn(gameId, {
     phase: 1,
     taxPaid: (currentTurn.taxPaid === 0) ? currentTurn.taxRequired : currentTurn.taxPaid,
     foodArmyPaid: (currentTurn.foodArmyPaid === 0) ? currentTurn.foodArmyReq : currentTurn.foodArmyPaid,
     foodPeoplePaid: (currentTurn.foodPeoplePaid === 0) ? currentTurn.foodPeopleReq : currentTurn.foodPeoplePaid
   })
-  const result = await fetch(`http://localhost:3000/api/game?id=${gameId}`, headers)
-  const data = await result.json()
-  headers.method = 'GET' //TODO: HACK - figure out the proper header usage
-
-  if (data.success) {
-    console.log('SUCCESS')
-    mutate(`http://localhost:3000/api/game?id=${gameId}`, data)
-  } else {
-    window.alert(data.result)
-  }
 }
 
+const submitBuild = async (gameId, currentTurn) => {
+  //TODO: Need to display costs during entry
+  await processTurn(gameId, {
+    phase: 2,
+    increaseLand: currentTurn.increaseLand,
+    bldCoastal: currentTurn.bldCoastal,
+    bldCity: currentTurn.bldCity,
+    bldAgriculture: currentTurn.bldAgriculture,
+    bldIndustrial: currentTurn.bldIndustrial
+  })
+}
+
+const submitAttack = async(gameId) => {
+  //TODO: Finish and do attacking
+  await processTurn(gameId, {
+    phase: 3
+  })
+}
+
+const submitPhase = async(gameId, turnData) => {
+  await processTurn(gameId, {
+    phase: 4,
+    taxRate: turnData.taxRate,
+    genTroopers: turnData.genTroopers,
+    genTurrets: turnData.genTurrets,
+    genBombers: turnData.genBombers,
+    genCarriers: turnData.genCarriers,
+    genTanks: turnData.genTanks
+  })
+}
 
 export const turnDisplay = (gameData, turnData) => {
   if (turnData.currentTurnId === null) {
@@ -184,7 +189,6 @@ export const turnDisplay = (gameData, turnData) => {
   }
   const currentTurn = turnData.currentTurn
   if(currentTurn.currentPhase === 1) { //INITIAL
-console.log(`PEOPLE FOOD ${currentTurn.foodPeoplePaid}`)
     return (
       <div>
           <div>Tax Required: <input onChange={e => currentTurn.taxPaid = e.target.value} type="text" defaultValue={currentTurn.taxRequired} /></div>
@@ -193,8 +197,39 @@ console.log(`PEOPLE FOOD ${currentTurn.foodPeoplePaid}`)
           <div><input type="button" value="Submit" onClick={() => submitInitial(gameData.id, currentTurn)} /></div>
       </div>
     )
+  } else if (currentTurn.currentPhase === 2) { //BUILD
+    return (
+      <div>
+        <div>Increase Land: <input onChange={e => currentTurn.increaseLand = e.target.value} type="text" defaultValue="0" /></div>
+        <div>Build Coastal: <input onChange={e => currentTurn.bldCoastal = e.target.value} type="text" defaultValue="0" /></div>
+        <div>Build City:  <input onChange={e => currentTurn.bldCity = e.target.value} type="text" defaultValue="0" /></div>
+        <div>Build Agriculture:  <input onChange={e => currentTurn.bldAgriculture = e.target.value} type="text" defaultValue="0" /></div>
+        <div>Build Industrial:  <input onChange={e => currentTurn.bldIndustrial = e.target.value} type="text" defaultValue="0" /></div>
+        <div><input type="button" value="Submit" onClick={() => submitBuild(gameData.id, currentTurn)} /></div>
+      </div>
+    )
+  } else if (currentTurn.currentPhase === 3) { //ATTACK
+    return (
+      <div>
+        <div>No attacking yet</div>
+        <div><input type="button" value="Submit" onClick={() => submitAttack(gameData.id)} /></div>
+      </div>
+    )
+  } else if (currentTurn.currentPhase === 4) { //COMPLETE
+    return (
+      <div>
+        <div>Tax Rate: <input onChange={e => turnData.taxRate = e.target.value} type="text" defaultValue={turnData.taxRate} /></div>
+        <div>Infantry Build Rate: <input onChange={e => turnData.genTroopers = e.target.value} type="text" defaultValue={turnData.genTroopers} /></div>
+        <div>Turrets Build Rate: <input onChange={e => turnData.genTurrets = e.target.value} type="text" defaultValue={turnData.genTurrets} /></div>
+        <div>Bombers Build Rate: <input onChange={e => turnData.genBombers = e.target.value} type="text" defaultValue={turnData.genBombers} /></div>
+        <div>Tanks Build Rate: <input onChange={e => turnData.genTanks = e.target.value} type="text" defaultValue={turnData.genTanks} /></div>
+        <div>Carriers Build Rate: <input onChange={e => turnData.genCarriers = e.target.value} type="text" defaultValue={turnData.genCarriers} /></div>
+        <div><input type="button" value="Submit" onClick={() => submitPhase(gameData.id, turnData)} /></div>
+      </div>
+    )
+
   } else {
-    return <button onClick={() => reloadTurn(gameData.id)}>IN TURN HACK</button>
+    return <div>{currentTurn.currentPhase}</div>
   }
 }
 
@@ -220,6 +255,20 @@ export const actionDisplay = (gameData, turnData) => {
     builtItems.push(`${currentTurn.newCarriers} carriers`)
   }
 
+  let builtLand = []
+  if (currentTurn.bldCoastal > 0) {
+    builtLand.push(`${currentTurn.bldCoastal} coastal`)
+  }
+  if (currentTurn.bldCity > 0) {
+    builtLand.push(`${currentTurn.bldCity} city`)
+  }
+  if (currentTurn.bldAgriculture > 0) {
+    builtLand.push(`${currentTurn.bldAgriculture} agriculture`)
+  }
+  if (currentTurn.bldIndustrial > 0) {
+    builtLand.push(`${currentTurn.bldIndustrial} industrial`)
+  }
+
   return (
     <div>
       <ul>
@@ -228,7 +277,10 @@ export const actionDisplay = (gameData, turnData) => {
        {currentTurn.incomeCoastal > 0 && (<li>Coastal income of ${currentTurn.incomeCoastal}</li>)}
        {currentTurn.incomeIndustrial > 0 && (<li>Industrial income of ${currentTurn.incomeIndustrial}</li>)}
        <li>Grew {currentTurn.foodGrown} pieces and lost {currentTurn.foodLost} pieces of food</li>
-       <li>Built {builtItems.join(', ')}</li>
+       {builtItems.length > 0 && (<li>Built {builtItems.join(', ')}</li>)}
+       {currentTurn.increaseLand > 0 && (<li>Increased land by {currentTurn.increaseLand} for ${currentTurn.costIncrease}</li>)}
+       {builtLand.length > 0 && currentTurn.costBuild > 0 && (<li>Built {builtLand.join(', ')} for ${currentTurn.costBuild}</li>)}
+
       </ul>
     </div>
   )

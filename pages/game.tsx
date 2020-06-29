@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Router from 'next/router'
 import { GetServerSideProps } from 'next'
 import Layout from '../components/Layout'
@@ -25,12 +25,127 @@ const getPlayerData = (gameId) => {
   return data
 }
 
+const getGameConfiguration = (gameId) => {
+  const { data, error } = useSWR(`http://localhost:3000/api/game?id=${gameId}&action=costs`, getData)
+  return data
+}
+
+
 const Game : React.FC<Props> = props => {
-  console.log('RENDER')
   const gameData = getGamesData(props.gameId)
   const playerData = getPlayerData(props.gameId)
-  if(!gameData || !playerData) {
+  const gameConfig = getGameConfiguration(props.gameId)
+
+  const [ submitData, setSubmitData ] = useState({
+    taxPaid: 0,
+    foodArmyPaid: 0,
+    foodPeoplePaid: 0,
+    increaseLand: 0,
+    bldCoastal: 0,
+    bldCity: 0,
+    bldAgriculture: 0,
+    bldIndustrial: 0,
+    taxRate: 0,
+    genTroopers: 0,
+    genTurrets: 0,
+    genBombers: 0,
+    genCarriers: 0,
+    genTanks: 0
+  })
+
+  if(!gameData || !playerData || !gameConfig) {
     return <div>loading</div>
+  }
+
+  const updateField = e => {
+    setSubmitData({
+      ...submitData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const processTurn = async (gameId, submitData) => {
+    console.log('processTurn')
+    let headers = HEADERS
+    headers.method = 'POST'
+    headers.body = JSON.stringify(submitData)
+    const result = await fetch(`http://localhost:3000/api/game?id=${gameId}`, headers)
+    const data = await result.json()
+    headers.method = 'GET' //TODO: HACK - figure out the proper header usage
+  
+    if (data.success) {
+      console.log('SUCCESS')
+      mutate(`http://localhost:3000/api/game?id=${gameId}`, data.result)
+    } else {
+      window.alert(data.result)
+    }
+  }
+ 
+  const submitTurn = async (gameId, phase) => {
+    await processTurn(gameId, {
+      ...submitData,
+      phase: phase
+    })
+  }
+
+  const getBuildSubmitValue = () => {
+    const cost = submitData.increaseLand * gameConfig.INCREASE_LAND_COST
+               + submitData.bldCoastal * gameConfig.BUILD_COASTAL_COST
+               + submitData.bldCity * gameConfig.BUILD_CITY_COST
+               + submitData.bldAgriculture * gameConfig.BUILD_AGRICULTURE_COST
+               + submitData.bldIndustrial * gameConfig.BUILD_INDUSTRIAL_COST
+    return `Purchase land for $${cost}`
+  }
+
+  const turnDisplay = (gameData, turnData) => {
+    if (turnData.currentTurnId === null) {
+      return <button onClick={() => submitTurn(gameData.id, 0)}>Take Turn {turnData.availableTurns}</button>
+    }
+    const currentTurn = turnData.currentTurn
+//TODO: default values are broken broken broken
+    if(currentTurn.currentPhase === 1) { //INITIAL
+      return (
+        <div>
+            <div>Tax Required: <input name="taxPaid" onChange={updateField} type="text" defaultValue={currentTurn.taxRequired} /></div>
+            <div>People Food Required: <input name="foodPeoplePaid" onChange={updateField} type="text" defaultValue={currentTurn.foodPeopleReq} /></div>
+            <div>Army Food Required: <input name="foodArmyPaid" onChange={updateField} type="text" defaultValue={currentTurn.foodArmyReq} /></div>
+            <div><input type="button" value="Submit" onClick={() => submitTurn(gameData.id, 1)} /></div>
+        </div>
+      )
+    } else if (currentTurn.currentPhase === 2) { //BUILD
+      return (
+        <div>
+          <div>Increase Land: <input name="increaseLand" onChange={updateField} type="text" defaultValue={submitData.increaseLand} /> at ${submitData.increaseLand * gameConfig.INCREASE_LAND_COST}</div>
+          <div>Build Coastal: <input name="bldCoastal" onChange={updateField} type="text" defaultValue={submitData.bldCoastal} /> at ${submitData.bldCoastal * gameConfig.BUILD_COASTAL_COST}</div>
+          <div>Build City:  <input name="bldCity" onChange={updateField} type="text" defaultValue={submitData.bldCity} /> at ${submitData.bldCity * gameConfig.BUILD_CITY_COST}</div>
+          <div>Build Agriculture:  <input name="bldAgriculture" onChange={updateField} type="text" defaultValue={submitData.bldAgriculture} /> at ${submitData.bldAgriculture * gameConfig.BUILD_AGRICULTURE_COST}</div>
+          <div>Build Industrial:  <input name="bldIndustrial" onChange={updateField} type="text" defaultValue={submitData.bldIndustrial} /> at ${submitData.bldIndustrial * gameConfig.BUILD_INDUSTRIAL_COST}</div>
+          <div><input type="button" value={getBuildSubmitValue()} onClick={() => submitTurn(gameData.id, 2)} /></div>
+        </div>
+      )
+    } else if (currentTurn.currentPhase === 3) { //ATTACK
+      return (
+        <div>
+          <div>No attacking yet</div>
+          <div><input type="button" value="Submit" onClick={() => submitTurn(gameData.id, 3)} /></div>
+        </div>
+      )
+    } else if (currentTurn.currentPhase === 4) { //COMPLETE
+      return (
+        <div>
+          <div>Tax Rate: <input name="taxRate" onChange={updateField} type="text" defaultValue={turnData.taxRate} /></div>
+          <div>Infantry Build Rate: <input name="genTroopers" onChange={updateField} type="text" defaultValue={turnData.genTroopers} /></div>
+          <div>Turrets Build Rate: <input name="genTurrets" onChange={updateField} type="text" defaultValue={turnData.genTurrets} /></div>
+          <div>Bombers Build Rate: <input name="genBombers" onChange={updateField} type="text" defaultValue={turnData.genBombers} /></div>
+          <div>Tanks Build Rate: <input name="genTanks" onChange={updateField} type="text" defaultValue={turnData.genTanks} /></div>
+          <div>Carriers Build Rate: <input name="genCarriers" onChange={updateField} type="text" defaultValue={turnData.genCarriers} /></div>
+          <div><input type="button" value="Submit" onClick={() => submitTurn(gameData.id, 4)} /></div>
+        </div>
+      )
+  
+    } else {
+      return <div>{currentTurn.currentPhase}</div>
+    }
   }
 
   return (
@@ -118,119 +233,6 @@ const Game : React.FC<Props> = props => {
       `}</style>
     </Layout>
   )
-}
-
-const processTurn = async (gameId, submitData) => {
-  console.log('processTurn')
-  let headers = HEADERS
-  headers.method = 'POST'
-  headers.body = JSON.stringify(submitData)
-  const result = await fetch(`http://localhost:3000/api/game?id=${gameId}`, headers)
-  const data = await result.json()
-  headers.method = 'GET' //TODO: HACK - figure out the proper header usage
-
-  if (data.success) {
-    console.log('SUCCESS')
-    mutate(`http://localhost:3000/api/game?id=${gameId}`, data.result)
-  } else {
-    window.alert(data.result)
-  }
-}
-
-export const startTurn = async (gameId) => {
-  await processTurn(gameId, {
-    phase: 0
-  })
-}
-
-const submitInitial = async (gameId, currentTurn) => {
-  await processTurn(gameId, {
-    phase: 1,
-    taxPaid: (currentTurn.taxPaid === 0) ? currentTurn.taxRequired : currentTurn.taxPaid,
-    foodArmyPaid: (currentTurn.foodArmyPaid === 0) ? currentTurn.foodArmyReq : currentTurn.foodArmyPaid,
-    foodPeoplePaid: (currentTurn.foodPeoplePaid === 0) ? currentTurn.foodPeopleReq : currentTurn.foodPeoplePaid
-  })
-}
-
-const submitBuild = async (gameId, currentTurn) => {
-  //TODO: Need to display costs during entry
-  await processTurn(gameId, {
-    phase: 2,
-    increaseLand: currentTurn.increaseLand,
-    bldCoastal: currentTurn.bldCoastal,
-    bldCity: currentTurn.bldCity,
-    bldAgriculture: currentTurn.bldAgriculture,
-    bldIndustrial: currentTurn.bldIndustrial
-  })
-}
-
-const submitAttack = async(gameId) => {
-  //TODO: Finish and do attacking
-  await processTurn(gameId, {
-    phase: 3
-  })
-}
-
-const submitPhase = async(gameId, turnData) => {
-  await processTurn(gameId, {
-    phase: 4,
-    taxRate: turnData.taxRate,
-    genTroopers: turnData.genTroopers,
-    genTurrets: turnData.genTurrets,
-    genBombers: turnData.genBombers,
-    genCarriers: turnData.genCarriers,
-    genTanks: turnData.genTanks
-  })
-}
-
-export const turnDisplay = (gameData, turnData) => {
-  if (turnData.currentTurnId === null) {
-    return <button onClick={() => startTurn(gameData.id)}>Take Turn {turnData.availableTurns}</button>
-  }
-  const currentTurn = turnData.currentTurn
-  if(currentTurn.currentPhase === 1) { //INITIAL
-    return (
-      <div>
-          <div>Tax Required: <input onChange={e => currentTurn.taxPaid = e.target.value} type="text" defaultValue={currentTurn.taxRequired} /></div>
-          <div>People Food Required: <input onChange={e => currentTurn.foodPeoplePaid = e.target.value} type="text" defaultValue={currentTurn.foodPeopleReq} /></div>
-          <div>Army Food Required: <input onChange={e => currentTurn.foodArmyPaid = e.target.value } type="text" defaultValue={currentTurn.foodArmyReq} /></div>
-          <div><input type="button" value="Submit" onClick={() => submitInitial(gameData.id, currentTurn)} /></div>
-      </div>
-    )
-  } else if (currentTurn.currentPhase === 2) { //BUILD
-    return (
-      <div>
-        <div>Increase Land: <input onChange={e => currentTurn.increaseLand = e.target.value} type="text" defaultValue="0" /></div>
-        <div>Build Coastal: <input onChange={e => currentTurn.bldCoastal = e.target.value} type="text" defaultValue="0" /></div>
-        <div>Build City:  <input onChange={e => currentTurn.bldCity = e.target.value} type="text" defaultValue="0" /></div>
-        <div>Build Agriculture:  <input onChange={e => currentTurn.bldAgriculture = e.target.value} type="text" defaultValue="0" /></div>
-        <div>Build Industrial:  <input onChange={e => currentTurn.bldIndustrial = e.target.value} type="text" defaultValue="0" /></div>
-        <div><input type="button" value="Submit" onClick={() => submitBuild(gameData.id, currentTurn)} /></div>
-      </div>
-    )
-  } else if (currentTurn.currentPhase === 3) { //ATTACK
-    return (
-      <div>
-        <div>No attacking yet</div>
-        <div><input type="button" value="Submit" onClick={() => submitAttack(gameData.id)} /></div>
-      </div>
-    )
-  } else if (currentTurn.currentPhase === 4) { //COMPLETE
-    return (
-      <div>
-        <div>Tax Rate: <input onChange={e => turnData.taxRate = e.target.value} type="text" defaultValue={turnData.taxRate} /></div>
-        <div>Infantry Build Rate: <input onChange={e => turnData.genTroopers = e.target.value} type="text" defaultValue={turnData.genTroopers} /></div>
-        <div>Turrets Build Rate: <input onChange={e => turnData.genTurrets = e.target.value} type="text" defaultValue={turnData.genTurrets} /></div>
-        <div>Bombers Build Rate: <input onChange={e => turnData.genBombers = e.target.value} type="text" defaultValue={turnData.genBombers} /></div>
-        <div>Tanks Build Rate: <input onChange={e => turnData.genTanks = e.target.value} type="text" defaultValue={turnData.genTanks} /></div>
-        <div>Carriers Build Rate: <input onChange={e => turnData.genCarriers = e.target.value} type="text" defaultValue={turnData.genCarriers} /></div>
-        <div><input type="button" value="Submit" onClick={() => submitPhase(gameData.id, turnData)} /></div>
-      </div>
-    )
-
-  } else {
-    return <div>{currentTurn.currentPhase}</div>
-  }
 }
 
 export const actionDisplay = (gameData, turnData) => {

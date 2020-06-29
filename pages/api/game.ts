@@ -8,6 +8,7 @@ const prisma = new PrismaClient({
 
 /**
  * GET game?id=GAME_ID - fullPlayerDetails - Will return heavy details with 'current' turn
+ * GET game?id=GAME_ID&action=costs - Will return the costs of buying stuff as an object of types
  * PUT game?id=GAME_ID - turnData - Manages the current turn in the phase that it's in - phase along with data is passed for sync confirmation
  * turn flow
  * - get updated money, food grown, food lost, population, army prod
@@ -44,7 +45,11 @@ export default async function handle(req, res) {
   }
 
   if (req.method === 'GET') {
-    return successMessage(res, player)
+    if (String(req.query.action) === 'costs') {
+      return successMessage(res, GAME_CONFIG)
+    } else {
+      return successMessage(res, player)
+    }
   } else if (req.method === 'POST') {
     const phase = Number(req.body.phase)
     if (phase === TURN_CONFIG.START) {
@@ -181,7 +186,7 @@ async function paymentTurn(res, data, player:Player) {
     return failMessage(res, `The food values for army and people is greater than the available food.`)
   }
   console.log(`Values are ${taxPaid} ${foodArmyPaid} ${foodPeoplePaid}`)
-
+return failMessage(res, 'IT BE WORKING')
   const turn = await prisma.turn.update({
     data: {
       currentPhase: TURN_CONFIG.BUILD,

@@ -253,7 +253,6 @@ async function buildTurn(res, data, player:Player) {
   if (totalLand > player.lndAvailable) {
     return failMessage(res, `The purchased land ${totalLand} is greater than the available land ${player.lndAvailable}`)
   }
-
   const turn = await prisma.turn.update({
     data: {
       currentPhase: TURN_CONFIG.ATTACK,

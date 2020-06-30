@@ -72,8 +72,6 @@ async function selectOneGame(gameId) {
     where: { gameId: game.id }
   })
   game.players = players
-  game.name += Date.now()
-  console.dir(game)
   return game
 }
 

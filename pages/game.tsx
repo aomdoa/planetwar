@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
-import Router from 'next/router'
 import { GetServerSideProps } from 'next'
 import Layout from '../components/Layout'
-import { PlayerClient } from '@prisma/client'
 import useSWR, { mutate } from 'swr'
 import { HEADERS } from './config'
 
@@ -59,32 +57,52 @@ const Game : React.FC<Props> = props => {
   }
 
   //Ensure we have default values set if there is nothing entered by user
-  if (submitData.taxPaid <= 0 && playerData.currentTurn.taxRequired > 0) {
-    setSubmitData({...submitData, taxPaid: playerData.currentTurn.taxRequired})
-  }
-  if (submitData.foodArmyPaid <= 0 && playerData.currentTurn.foodArmyReq > 0) {
-    setSubmitData({...submitData, foodArmyPaid: playerData.currentTurn.foodArmyReq})
-  }
-  if (submitData.foodPeoplePaid <= 0 && playerData.currentTurn.foodPeopleReq > 0) {
-    setSubmitData({...submitData, foodPeoplePaid: playerData.currentTurn.foodPeopleReq})
-  }
-  if (submitData.taxRate <= 0 && playerData.taxRate > 0) {
-    setSubmitData({...submitData, taxRate: playerData.taxRate})
-  }
-  if (submitData.genTroopers < 0 && playerData.genTroopers >= 0) {
-    setSubmitData({...submitData, genTroopers: playerData.genTroopers})
-  }
-  if (submitData.genTurrets < 0 && playerData.genTurrets >= 0) {
-    setSubmitData({...submitData, genTurrets: playerData.genTurrets})
-  }
-  if (submitData.genBombers < 0 && playerData.genBombers >= 0) {
-    setSubmitData({...submitData, genBombers: playerData.genBombers})
-  }
-  if (submitData.genTanks < 0 && playerData.genTanks >= 0) {
-    setSubmitData({...submitData, genTanks: playerData.genTanks})
-  }
-  if (submitData.genCarriers < 0 && playerData.genCarriers >= 0) {
-    setSubmitData({...submitData, genCarriers: playerData.genCarriers})
+  if (playerData.currentTurn) {
+    if (submitData.taxPaid <= 0 && playerData.currentTurn.taxRequired > 0) {
+      setSubmitData({...submitData, taxPaid: playerData.currentTurn.taxRequired})
+    }
+    if (submitData.foodArmyPaid <= 0 && playerData.currentTurn.foodArmyReq > 0) {
+      setSubmitData({...submitData, foodArmyPaid: playerData.currentTurn.foodArmyReq})
+    }
+    if (submitData.foodPeoplePaid <= 0 && playerData.currentTurn.foodPeopleReq > 0) {
+      setSubmitData({...submitData, foodPeoplePaid: playerData.currentTurn.foodPeopleReq})
+    }
+    if (submitData.taxRate <= 0 && playerData.taxRate > 0) {
+      setSubmitData({...submitData, taxRate: playerData.taxRate})
+    }
+    if (submitData.genTroopers < 0 && playerData.genTroopers >= 0) {
+      setSubmitData({...submitData, genTroopers: playerData.genTroopers})
+    }
+    if (submitData.genTurrets < 0 && playerData.genTurrets >= 0) {
+      setSubmitData({...submitData, genTurrets: playerData.genTurrets})
+    }
+    if (submitData.genBombers < 0 && playerData.genBombers >= 0) {
+      setSubmitData({...submitData, genBombers: playerData.genBombers})
+    }
+    if (submitData.genTanks < 0 && playerData.genTanks >= 0) {
+      setSubmitData({...submitData, genTanks: playerData.genTanks})
+    }
+    if (submitData.genCarriers < 0 && playerData.genCarriers >= 0) {
+      setSubmitData({...submitData, genCarriers: playerData.genCarriers})
+    }
+  } else if (submitData.taxPaid > 0 || submitData.foodArmyPaid > 0 || submitData.foodPeoplePaid > 0) {
+    //Reset data if going back into the turn
+    setSubmitData({
+      taxPaid: 0,
+      foodArmyPaid: 0,
+      foodPeoplePaid: 0,
+      increaseLand: 0,
+      bldCoastal: 0,
+      bldCity: 0,
+      bldAgriculture: 0,
+      bldIndustrial: 0,
+      taxRate: 0,
+      genTroopers: -1,
+      genTurrets: -1,
+      genBombers: -1,
+      genCarriers: -1,
+      genTanks: -1
+    })
   }
 
   //Functions to process the turn and data
@@ -117,6 +135,10 @@ const Game : React.FC<Props> = props => {
       ...submitData,
       phase: phase
     })
+    if (phase === 1) {
+      //TODO: Fix the reload hack - going from 0 to 1 has the form broken without a reload
+      window.location.reload()
+    }
   }
 
   //Simple function to build out the land purchase costs based on user entry
@@ -137,23 +159,23 @@ const Game : React.FC<Props> = props => {
     const currentTurn = turnData.currentTurn
     if(currentTurn.currentPhase === 1) { //INITIAL
       return (
-        <div>
+        <form name="phaseOne">
             <div>Tax Required: <input name="taxPaid" onChange={updateField} type="text" defaultValue={submitData.taxPaid} /></div>
             <div>People Food Required: <input name="foodPeoplePaid" onChange={updateField} type="text" defaultValue={submitData.foodPeoplePaid} /></div>
             <div>Army Food Required: <input name="foodArmyPaid" onChange={updateField} type="text" defaultValue={submitData.foodArmyPaid} /></div>
             <div><input type="button" value="Submit" onClick={() => submitTurn(gameData.id, 1)} /></div>
-        </div>
+        </form>
       )
     } else if (currentTurn.currentPhase === 2) { //BUILD
       return (
-        <div>
+        <form name="phaseTwo">
           <div>Increase Land: <input name="increaseLand" onChange={updateField} type="text" defaultValue={submitData.increaseLand} /> at ${submitData.increaseLand * gameConfig.INCREASE_LAND_COST}</div>
           <div>Build Coastal: <input name="bldCoastal" onChange={updateField} type="text" defaultValue={submitData.bldCoastal} /> at ${submitData.bldCoastal * gameConfig.BUILD_COASTAL_COST}</div>
           <div>Build City:  <input name="bldCity" onChange={updateField} type="text" defaultValue={submitData.bldCity} /> at ${submitData.bldCity * gameConfig.BUILD_CITY_COST}</div>
           <div>Build Agriculture:  <input name="bldAgriculture" onChange={updateField} type="text" defaultValue={submitData.bldAgriculture} /> at ${submitData.bldAgriculture * gameConfig.BUILD_AGRICULTURE_COST}</div>
           <div>Build Industrial:  <input name="bldIndustrial" onChange={updateField} type="text" defaultValue={submitData.bldIndustrial} /> at ${submitData.bldIndustrial * gameConfig.BUILD_INDUSTRIAL_COST}</div>
           <div><input type="button" value={getBuildSubmitValue()} onClick={() => submitTurn(gameData.id, 2)} /></div>
-        </div>
+        </form>
       )
     } else if (currentTurn.currentPhase === 3) { //ATTACK
       return (
@@ -188,7 +210,7 @@ const Game : React.FC<Props> = props => {
         <table>
           <tbody>
             <tr>
-              <th>{playerData.name}</th>
+              <th>Player: {playerData.name}</th>
             </tr>
             <tr>
               <td>Population</td>
@@ -309,15 +331,17 @@ export const actionDisplay = (gameData, turnData) => {
   return (
     <div>
       <ul>
-       {currentTurn.popGrowth > 0 && (<li>Population growth of {currentTurn.popGrowth} people</li>)}
-       {currentTurn.popTax > 0 && (<li>Tax income of ${currentTurn.popTax}</li>)}
-       {currentTurn.incomeCoastal > 0 && (<li>Coastal income of ${currentTurn.incomeCoastal}</li>)}
-       {currentTurn.incomeIndustrial > 0 && (<li>Industrial income of ${currentTurn.incomeIndustrial}</li>)}
-       <li>Grew {currentTurn.foodGrown} pieces and lost {currentTurn.foodLost} pieces of food</li>
-       {builtItems.length > 0 && (<li>Built {builtItems.join(', ')}</li>)}
-       {currentTurn.increaseLand > 0 && (<li>Increased land by {currentTurn.increaseLand} for ${currentTurn.costIncrease}</li>)}
        {builtLand.length > 0 && currentTurn.costBuild > 0 && (<li>Built {builtLand.join(', ')} for ${currentTurn.costBuild}</li>)}
-
+       {currentTurn.increaseLand > 0 && (<li>Increased land by {currentTurn.increaseLand} for ${currentTurn.costIncrease}</li>)}
+       {currentTurn.foodArmyPaid > 0 && (<li>Gave {currentTurn.foodArmyPaid} pieces of food to the army requiring {currentTurn.foodArmyReq} pieces</li>)}
+       {currentTurn.foodPeoplePaid > 0 && (<li>Gave {currentTurn.foodPeoplePaid} pieces of food to the community requiring {currentTurn.foodPeopleReq} pieces</li>)}
+       {currentTurn.taxPaid > 0 && (<li>Paid ${currentTurn.taxPaid} of the ${currentTurn.taxRequired} tax required</li>)}
+       {builtItems.length > 0 && (<li>Built {builtItems.join(', ')}</li>)}
+       <li>Grew {currentTurn.foodGrown} pieces and lost {currentTurn.foodLost} pieces of food</li>
+       {currentTurn.incomeIndustrial > 0 && (<li>Industrial income of ${currentTurn.incomeIndustrial}</li>)}
+       {currentTurn.incomeCoastal > 0 && (<li>Coastal income of ${currentTurn.incomeCoastal}</li>)}
+       {currentTurn.popTax > 0 && (<li>Tax income of ${currentTurn.popTax}</li>)}
+       {currentTurn.popGrowth > 0 && (<li>Population growth of {currentTurn.popGrowth} people</li>)}
       </ul>
     </div>
   )

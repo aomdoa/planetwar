@@ -186,7 +186,7 @@ async function paymentTurn(res, data, player:Player) {
     return failMessage(res, `The food values for army and people is greater than the available food.`)
   }
   console.log(`Values are ${taxPaid} ${foodArmyPaid} ${foodPeoplePaid}`)
-return failMessage(res, 'IT BE WORKING')
+
   const turn = await prisma.turn.update({
     data: {
       currentPhase: TURN_CONFIG.BUILD,

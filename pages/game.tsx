@@ -32,6 +32,7 @@ const getGameConfiguration = (gameId) => {
 
 
 const Game : React.FC<Props> = props => {
+  //Get our data for where we at
   const gameData = getGamesData(props.gameId)
   const playerData = getPlayerData(props.gameId)
   const gameConfig = getGameConfiguration(props.gameId)
@@ -46,17 +47,47 @@ const Game : React.FC<Props> = props => {
     bldAgriculture: 0,
     bldIndustrial: 0,
     taxRate: 0,
-    genTroopers: 0,
-    genTurrets: 0,
-    genBombers: 0,
-    genCarriers: 0,
-    genTanks: 0
+    genTroopers: -1,
+    genTurrets: -1,
+    genBombers: -1,
+    genCarriers: -1,
+    genTanks: -1
   })
 
   if(!gameData || !playerData || !gameConfig) {
     return <div>loading</div>
   }
 
+  //Ensure we have default values set if there is nothing entered by user
+  if (submitData.taxPaid <= 0 && playerData.currentTurn.taxRequired > 0) {
+    setSubmitData({...submitData, taxPaid: playerData.currentTurn.taxRequired})
+  }
+  if (submitData.foodArmyPaid <= 0 && playerData.currentTurn.foodArmyReq > 0) {
+    setSubmitData({...submitData, foodArmyPaid: playerData.currentTurn.foodArmyReq})
+  }
+  if (submitData.foodPeoplePaid <= 0 && playerData.currentTurn.foodPeopleReq > 0) {
+    setSubmitData({...submitData, foodPeoplePaid: playerData.currentTurn.foodPeopleReq})
+  }
+  if (submitData.taxRate <= 0 && playerData.taxRate > 0) {
+    setSubmitData({...submitData, taxRate: playerData.taxRate})
+  }
+  if (submitData.genTroopers < 0 && playerData.genTroopers >= 0) {
+    setSubmitData({...submitData, genTroopers: playerData.genTroopers})
+  }
+  if (submitData.genTurrets < 0 && playerData.genTurrets >= 0) {
+    setSubmitData({...submitData, genTurrets: playerData.genTurrets})
+  }
+  if (submitData.genBombers < 0 && playerData.genBombers >= 0) {
+    setSubmitData({...submitData, genBombers: playerData.genBombers})
+  }
+  if (submitData.genTanks < 0 && playerData.genTanks >= 0) {
+    setSubmitData({...submitData, genTanks: playerData.genTanks})
+  }
+  if (submitData.genCarriers < 0 && playerData.genCarriers >= 0) {
+    setSubmitData({...submitData, genCarriers: playerData.genCarriers})
+  }
+
+  //Functions to process the turn and data
   const updateField = e => {
     setSubmitData({
       ...submitData,
@@ -88,6 +119,7 @@ const Game : React.FC<Props> = props => {
     })
   }
 
+  //Simple function to build out the land purchase costs based on user entry
   const getBuildSubmitValue = () => {
     const cost = submitData.increaseLand * gameConfig.INCREASE_LAND_COST
                + submitData.bldCoastal * gameConfig.BUILD_COASTAL_COST
@@ -97,18 +129,18 @@ const Game : React.FC<Props> = props => {
     return `Purchase land for $${cost}`
   }
 
+  //Display the details of the current turn and what user has entered
   const turnDisplay = (gameData, turnData) => {
     if (turnData.currentTurnId === null) {
       return <button onClick={() => submitTurn(gameData.id, 0)}>Take Turn {turnData.availableTurns}</button>
     }
     const currentTurn = turnData.currentTurn
-//TODO: default values are broken broken broken
     if(currentTurn.currentPhase === 1) { //INITIAL
       return (
         <div>
-            <div>Tax Required: <input name="taxPaid" onChange={updateField} type="text" defaultValue={currentTurn.taxRequired} /></div>
-            <div>People Food Required: <input name="foodPeoplePaid" onChange={updateField} type="text" defaultValue={currentTurn.foodPeopleReq} /></div>
-            <div>Army Food Required: <input name="foodArmyPaid" onChange={updateField} type="text" defaultValue={currentTurn.foodArmyReq} /></div>
+            <div>Tax Required: <input name="taxPaid" onChange={updateField} type="text" defaultValue={submitData.taxPaid} /></div>
+            <div>People Food Required: <input name="foodPeoplePaid" onChange={updateField} type="text" defaultValue={submitData.foodPeoplePaid} /></div>
+            <div>Army Food Required: <input name="foodArmyPaid" onChange={updateField} type="text" defaultValue={submitData.foodArmyPaid} /></div>
             <div><input type="button" value="Submit" onClick={() => submitTurn(gameData.id, 1)} /></div>
         </div>
       )
@@ -133,12 +165,12 @@ const Game : React.FC<Props> = props => {
     } else if (currentTurn.currentPhase === 4) { //COMPLETE
       return (
         <div>
-          <div>Tax Rate: <input name="taxRate" onChange={updateField} type="text" defaultValue={turnData.taxRate} /></div>
-          <div>Infantry Build Rate: <input name="genTroopers" onChange={updateField} type="text" defaultValue={turnData.genTroopers} /></div>
-          <div>Turrets Build Rate: <input name="genTurrets" onChange={updateField} type="text" defaultValue={turnData.genTurrets} /></div>
-          <div>Bombers Build Rate: <input name="genBombers" onChange={updateField} type="text" defaultValue={turnData.genBombers} /></div>
-          <div>Tanks Build Rate: <input name="genTanks" onChange={updateField} type="text" defaultValue={turnData.genTanks} /></div>
-          <div>Carriers Build Rate: <input name="genCarriers" onChange={updateField} type="text" defaultValue={turnData.genCarriers} /></div>
+          <div>Tax Rate: <input name="taxRate" onChange={updateField} type="text" defaultValue={submitData.taxRate} /></div>
+          <div>Infantry Build Rate: <input name="genTroopers" onChange={updateField} type="text" defaultValue={submitData.genTroopers} /></div>
+          <div>Turrets Build Rate: <input name="genTurrets" onChange={updateField} type="text" defaultValue={submitData.genTurrets} /></div>
+          <div>Bombers Build Rate: <input name="genBombers" onChange={updateField} type="text" defaultValue={submitData.genBombers} /></div>
+          <div>Tanks Build Rate: <input name="genTanks" onChange={updateField} type="text" defaultValue={submitData.genTanks} /></div>
+          <div>Carriers Build Rate: <input name="genCarriers" onChange={updateField} type="text" defaultValue={submitData.genCarriers} /></div>
           <div><input type="button" value="Submit" onClick={() => submitTurn(gameData.id, 4)} /></div>
         </div>
       )
@@ -148,6 +180,7 @@ const Game : React.FC<Props> = props => {
     }
   }
 
+  //Main page layout
   return (
     <Layout>
       <div>
@@ -235,6 +268,8 @@ const Game : React.FC<Props> = props => {
   )
 }
 
+//Displays the actions taken place this turn (but not passed)
+//TODO: Add support for displaying past turns as well
 export const actionDisplay = (gameData, turnData) => {
   if (turnData.currentTurnId === null) {
     return <p>Turn not started yet...</p>

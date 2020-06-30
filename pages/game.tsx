@@ -6,24 +6,82 @@ import { HEADERS } from './config'
 
 //TODO: Add proper type definition
 type Props = {
-  gameId: Number,
-  game: Object,
-  player: Object
+  gameId: number
 }
 
-const getData = url => fetch(url, HEADERS).then(_ => _.json()).then(_ => _.result)
+type GameData = {
+  id: number,
+  name: string
+}
 
-const getGamesData = (gameId) => {
+type PlayerData = {
+  id: number,
+  name: string,
+  currentTurnId: number,
+  currentTurn: CurrentTurn
+  taxRate: number,
+  genTroopers: number,
+  genTurrets: number,
+  genBombers: number,
+  genTanks: number,
+  genCarriers: number,
+  population: number,
+  money: number,
+  food: number,
+  lndAvailable: number,
+  lndAgriculture: number,
+  lndCity: number,
+  lndCoastal: number,
+  lndIndustrial: number,
+  troopers: number,
+  turrets: number,
+  bombers: number,
+  tanks: number,
+  carriers: number,
+  availableTurns: number
+}
+
+type CurrentTurn = {
+  taxRequired: number,
+  foodArmyReq: number,
+  foodPeopleReq: number,
+  currentPhase: number,
+  newTroopers: number,
+  newTurrets: number,
+  newBombers: number,
+  newTanks: number,
+  newCarriers: number,
+  bldCoastal: number,
+  bldCity: number,
+  bldAgriculture: number,
+  bldIndustrial: number,
+  costBuild: number,
+  increaseLand: number,
+  costIncrease: number,
+  foodArmyPaid: number,
+  foodPeoplePaid: number,
+  taxPaid: number,
+  foodGrown: number,
+  foodLost: number,
+  incomeIndustrial: number,
+  incomeCoastal: number,
+  popTax: number,
+  popGrowth: number
+}
+
+const getData: Object = url => fetch(url, HEADERS).then(_ => _.json()).then(_ => _.result)
+
+const getGamesData = (gameId: number): GameData => {
   const { data, error } = useSWR(`http://localhost:3000/api/games?id=${gameId}`, getData)
   return data
 }
 
-const getPlayerData = (gameId) => {
+const getPlayerData = (gameId: number): PlayerData => {
   const { data, error } = useSWR(`http://localhost:3000/api/game?id=${gameId}`, getData)
   return data
 }
 
-const getGameConfiguration = (gameId) => {
+const getGameConfiguration = (gameId: number) => {
   const { data, error } = useSWR(`http://localhost:3000/api/game?id=${gameId}&action=costs`, getData)
   return data
 }
@@ -31,8 +89,8 @@ const getGameConfiguration = (gameId) => {
 
 const Game : React.FC<Props> = props => {
   //Get our data for where we at
-  const gameData = getGamesData(props.gameId)
-  const playerData = getPlayerData(props.gameId)
+  const gameData: GameData = getGamesData(props.gameId)
+  const playerData: PlayerData = getPlayerData(props.gameId)
   const gameConfig = getGameConfiguration(props.gameId)
 
   const [ submitData, setSubmitData ] = useState({
@@ -113,7 +171,7 @@ const Game : React.FC<Props> = props => {
     })
   }
 
-  const processTurn = async (gameId, submitData) => {
+  const processTurn = async (gameId: number, submitData: Object) => {
     console.log('processTurn')
     let headers = HEADERS
     headers.method = 'POST'
@@ -130,7 +188,7 @@ const Game : React.FC<Props> = props => {
     }
   }
  
-  const submitTurn = async (gameId, phase) => {
+  const submitTurn = async (gameId: number, phase: number) => {
     await processTurn(gameId, {
       ...submitData,
       phase: phase
@@ -152,7 +210,7 @@ const Game : React.FC<Props> = props => {
   }
 
   //Display the details of the current turn and what user has entered
-  const turnDisplay = (gameData, turnData) => {
+  const turnDisplay = (gameData: GameData, turnData: PlayerData) => {
     if (turnData.currentTurnId === null) {
       return <button onClick={() => submitTurn(gameData.id, 0)}>Take Turn {turnData.availableTurns}</button>
     }
@@ -292,7 +350,7 @@ const Game : React.FC<Props> = props => {
 
 //Displays the actions taken place this turn (but not passed)
 //TODO: Add support for displaying past turns as well
-export const actionDisplay = (gameData, turnData) => {
+export const actionDisplay = (gameData: GameData, turnData: PlayerData) => {
   if (turnData.currentTurnId === null) {
     return <p>Turn not started yet...</p>
   }
@@ -348,7 +406,6 @@ export const actionDisplay = (gameData, turnData) => {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  //TODO: Just use context in the render?
   return {
     props: { 'gameId': context.query.id }
   }

@@ -17,6 +17,7 @@ CREATE TABLE "game" (
     "safeTurns" INTEGER NOT NULL,
     "turnTime" INTEGER NOT NULL,
     "turnsDone" INTEGER NOT NULL,
+    "lastTurn" TIMESTAMP,
     "gameDone" INTEGER NOT NULL
 );
 

@@ -26,6 +26,7 @@ model Game {
   startFood  Int      @default(1000)
   safeTurns  Int      @default(100)
   turnTime   Int      @default(600)
+  lastTurn   DateTime?
   turnsDone  Int      @default(0)
   gameDone   Int      @default(4320)
   players    Player[]

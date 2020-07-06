@@ -71,8 +71,7 @@ async function selectOneGame(gameId) {
   const players = await prisma.player.findMany({
     where: { gameId: game.id }
   })
-  game.players = players
-  return game
+  return {...game, players: players}
 }
 
 /**

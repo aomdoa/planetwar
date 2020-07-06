@@ -110,6 +110,13 @@ const Game : React.FC<Props> = props => {
     genTanks: -1
   })
 
+  const [ attackData, setAttackData ] = useState({
+    playerType: 0,
+    sentTroopers: 0,
+    sentBombers: 0,
+    sentTanks: 0
+  })
+
   if(!gameData || !playerData || !gameConfig) {
     return <div>loading</div>
   }
@@ -161,12 +168,26 @@ const Game : React.FC<Props> = props => {
       genCarriers: -1,
       genTanks: -1
     })
+
+    setAttackData({
+      playerType: 0,
+      sentTroopers: 0,
+      sentBombers: 0,
+      sentTanks: 0,
+    })
   }
 
   //Functions to process the turn and data
   const updateField = e => {
     setSubmitData({
       ...submitData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const updateAttack = e => {
+    setAttackData({
+      ...attackData,
       [e.target.name]: e.target.value
     })
   }
@@ -196,6 +217,32 @@ const Game : React.FC<Props> = props => {
     if (phase === 1) {
       //TODO: Fix the reload hack - going from 0 to 1 has the form broken without a reload
       window.location.reload()
+    }
+  }
+
+  const confirmAttack = async (gameId: number) => {
+    if (window.confirm("Do the attack?")) {
+      let myHeaders = {
+        headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFvbWRvYUBnbWFpbC5jb20iLCJpZCI6MSwibmFtZSI6ImFvbWRvYSIsImlzQWRtaW4iOnRydWUsImlhdCI6MTU5MTgzMTY4NX0.-uXAxUKYUXJj681WlnfDmuOQmak902tXugOAGaoDsCs'
+        },
+        method: 'PUT',
+        body: JSON.stringify(attackData)
+      }
+      //myHeaders.method = 'PUT'
+      //myHeaders.body = JSON.stringify(attackData)
+      const result = await fetch(`http://localhost:3000/api/game?id=${gameId}`, myHeaders)
+      const data = await result.json()
+      //headers.method = 'GET' //TODO: HACK - figure out the proper header usage
+  
+      if (data.success) {
+        console.log('SUCCESS')
+        mutate(`http://localhost:3000/api/game?id=${gameId}`, data.result)
+      } else {
+        window.alert(data.result)
+      }
     }
   }
 
@@ -238,8 +285,19 @@ const Game : React.FC<Props> = props => {
     } else if (currentTurn.currentPhase === 3) { //ATTACK
       return (
         <div>
-          <div>No attacking yet</div>
-          <div><input type="button" value="Submit" onClick={() => submitTurn(gameData.id, 3)} /></div>
+          <div>
+            <div>Who would you like to attack?</div>
+            <div>Enemy #1 <input type="radio" name="playerType" value="1" onChange={updateAttack} /></div>
+            <div>Enemy #2 <input type="radio" name="playerType" value="2" onChange={updateAttack} /></div>
+            <div>Attack with:</div>
+            <div>Infantry: <input name="sentTroopers" type="text" onChange={updateAttack} /></div>
+            <div>Bombers: <input name="sentBombers" type="text" onChange={updateAttack} /></div>
+            <div>Tanks: <input name="sentTanks" type="text" onChange={updateAttack} /></div>
+          </div>
+          <div>
+            <input type="button" value="Attack!" onClick={() => confirmAttack(gameData.id)} />
+            <input type="button" value="No Attack" onClick={() => submitTurn(gameData.id, 3)} />
+          </div>
         </div>
       )
     } else if (currentTurn.currentPhase === 4) { //COMPLETE

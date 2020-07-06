@@ -21,7 +21,7 @@ export default async function handle(req, res) {
                     console.log(`Game ${game.id} is done, no more turns allowed`)
                 } else {
                     const turnTime = game.turnTime * 1000
-                    const diff = now - game.lastTurn
+                    const diff = now - game.lastTurn.getTime()
                     const nextTurn = (diff >= turnTime) ? true : false
                     if (nextTurn) {
                         console.log(`Game ${game.id} is processing turn`)

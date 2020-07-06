@@ -121,6 +121,9 @@ model Attack {
   turnId            Int
   tgtPlayer         Player?  @relation(fields: [tgtPlayerId], references: [id])
   tgtPlayerId       Int?
+  sentTroopers      Int      @default(0)
+  sentBombers       Int      @default(0)
+  sentTanks         Int      @default(0)
   lostTroopers      Int      @default(0)
   lostBombers       Int      @default(0)
   lostTanks         Int      @default(0)

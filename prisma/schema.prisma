@@ -133,7 +133,7 @@ model Attack {
   killedTanks       Int      @default(0)
   killedCarriers    Int      @default(0)
   gainedAvailLand   Int      @default(0)
-  gainedCostal      Int      @default(0)
+  gainedCoastal     Int      @default(0)
   gainedCity        Int      @default(0)
   gainedAgriculture Int      @default(0)
   gainedIndustrial  Int      @default(0)

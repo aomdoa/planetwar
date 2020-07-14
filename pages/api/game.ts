@@ -9,7 +9,8 @@ const prisma = new PrismaClient({
 /**
  * GET game?id=GAME_ID - fullPlayerDetails - Will return heavy details with 'current' turn
  * GET game?id=GAME_ID&action=costs - Will return the costs of buying stuff as an object of types
- * PUT game?id=GAME_ID - attackData - Performs the attack
+ * GET game?id=GAME_ID&action=attack - Returns attack results if any
+ * PUT game?id=GAME_ID - attackData - Performs the attack - this could probably be placed in the standard post
  * POST game?id=GAME_ID - turnData - Manages the current turn in the phase that it's in - phase along with data is passed for sync confirmation
  * turn flow
  * - get updated money, food grown, food lost, population, army prod
@@ -48,6 +49,8 @@ export default async function handle(req, res) {
   if (req.method === 'GET') {
     if (String(req.query.action) === 'costs') {
       return successMessage(res, GAME_CONFIG)
+    } else if (String(req.query.action) === 'attack') {
+      return getCurrentTurnAttack(res, player)
     } else {
       return successMessage(res, player)
     }
@@ -60,7 +63,7 @@ export default async function handle(req, res) {
     } else if (phase === TURN_CONFIG.BUILD) {
       return buildTurn(res, req.body, player)
     } else if (phase === TURN_CONFIG.ATTACK) {
-      return attackTurn(res, req.body, player)
+      return noAttackTurn(res, req.body, player)
     } else if (phase === TURN_CONFIG.CHANGE) {
       return completeTurn(res, req.body, player)
     } else {
@@ -73,70 +76,12 @@ export default async function handle(req, res) {
   }
 }
 
-async function executeAttack(res, data, player:Player) {
-  console.log('executeAttack')
-  console.dir(data)
-  if (!(data.playerType) || !(data.playerType > 0)) {
-    return failMessage(res, `You must select a target for your attack!`)
-  }
-
-  const sentTroopers = Number(data.sentTroopers)
-  const sentBombers = Number(data.sentBombers)
-  const sentTanks = Number(data.sentTanks)
-
-  if (sentTroopers === 0 && sentBombers === 0 && sentTanks === 0) {
-    return failMessage(res, `At least one type of troop must be sent for the attack`)
-  }
-
-  if (sentTroopers < 0 || sentTroopers > player.troopers) {
-    return failMessage(res, `Unable to send ${sentTroopers} troopers!`)
-  }
-  if (sentBombers < 0 || sentBombers > player.bombers) {
-    return failMessage(res, `Unable to send ${sentBombers} bombers!`)
-  }
-  if (sentTanks < 0 || sentTanks > player.tanks) {
-    return failMessage(res, `Unable to send ${sentTanks} tanks!`)
-  }
-
-  //DO THE ATTACK
-  const attackResults = {
-    lostTroopers: 0,
-    lostBombers: 0,
-    lostTanks: 0,
-    killedTroopers: 0,
-    killedTurrets: 0,
-    killedCarriers: 0
-  }
-  //TODO: Make the target selection actually do something... not sure what yet
-  const defTroopers = player.troopers * (Math.random() + GAME_CONFIG.TGT_STRENGTH_BONUS)
-  console.log(`Troopers: ${defTroopers}`)
-  const defTurrets = player.bombers * (Math.random() + GAME_CONFIG.TGT_STRENGTH_BONUS)
-  console.log(`Turrets: ${defTurrets}`)
-  const defCarriers = player.tanks * (Math.random() + GAME_CONFIG.TGT_STRENGTH_BONUS)
-  console.log(`Carriers: ${defCarriers}`)
-
-  const attackStrength = sentTroopers * GAME_CONFIG.ATTACK_TROOPER +
-                         sentBombers  * GAME_CONFIG.ATTACK_BOMBER +
-                         sentTanks    * GAME_CONFIG.ATTACK_TANK
-  const defenseStrength = defTroopers * GAME_CONFIG.DEFENSE_TROOPER +
-                          defTurrets  * GAME_CONFIG.DEFENSE_TURRET +
-                          defCarriers * GAME_CONFIG.DEFENSE_CARRIER
-  const warResult = attackStrength - defenseStrength
-  const warPercent = warResult / attackStrength
-  console.log(`ATTACK: ${attackStrength}, DEFENSE: ${defenseStrength} with a diff of ${warResult} and percent of ${warPercent}`)
-  let attackLoss = Math.random()
-  if (warResult < 0 && attackLoss < GAME_CONFIG.ATTACK_LOSE_LOSS) {
-    attackLoss = GAME_CONFIG.ATTACK_LOSE_LOSS
-  } else if (warResult > 0 && attackLoss < GAME_CONFIG.ATTACK_WIN_LOSS) {
-    attackLoss = GAME_CONFIG.ATTACK_WIN_LOSS
-  }
-
-  //TODO deal with the loss stuff properly it's broken...
-  console.log(`Loss is ${attackLoss} eg lose ${Math.round(sentTroopers * attackLoss)}`)
-
-  return failMessage(res, `not done yet`)
-}
-
+/**
+ * The initial turn processing that actually determines what the player will receive and need to pay
+ * @param res 
+ * @param data 
+ * @param player 
+ */
 async function startTurn(res, data, player:Player) {
   if (player.currentTurnId > 0) {
     return failMessage(res, `There is an in progress turn and cannot be restarted`)
@@ -227,6 +172,13 @@ async function startTurn(res, data, player:Player) {
   return successMessage(res, updatedPlayer)
 }
 
+/**
+ * Processes the payment from the player based on the requirements determined
+ * TODO: Still needs to the detriments if payments not made properly
+ * @param res
+ * @param data 
+ * @param player 
+ */
 async function paymentTurn(res, data, player:Player) {
   if (player.currentTurnId === 0 || player.currentTurnId === null) {
     return failMessage(res, `Turn is not currently in progress`)
@@ -277,6 +229,12 @@ async function paymentTurn(res, data, player:Player) {
   return successMessage(res, updatedPlayer)
 }
 
+/**
+ * Build out the land and buildings based on the entries from the player
+ * @param res 
+ * @param data 
+ * @param player 
+ */
 async function buildTurn(res, data, player:Player) {
   if (player.currentTurnId === 0 || player.currentTurnId === null) {
     return failMessage(res, `Turn is not currently in progress`)
@@ -351,16 +309,38 @@ async function buildTurn(res, data, player:Player) {
   return successMessage(res, updatedPlayer)
 }
 
-async function attackTurn(res, data, player:Player) {
+/**
+ * If there's an attack for the current turn return it
+ * @param res 
+ * @param player 
+ */
+async function getCurrentTurnAttack(res, player:Player) {
+  const attacks = await prisma.attack.findMany({
+    where: {
+      turnId: player.currentTurnId
+    }
+  })
+  console.dir(attacks)
+  if (attacks.length > 0) {
+    return successMessage(res, attacks[0])
+  } else {
+    return successMessage(res, {})
+  }
+}
+
+/**
+ * Player decides to not attack any other players real or fake
+ * @param res 
+ * @param data 
+ * @param player 
+ */
+async function noAttackTurn(res, data, player:Player) {
   if (player.currentTurnId === 0 || player.currentTurnId === null) {
     return failMessage(res, `Turn is not currently in progress`)
   }
   if (player.currentTurn.currentPhase !== TURN_CONFIG.ATTACK) {
     return failMessage(res, `Turn is not in attack phase it is in ${player.currentTurn.currentPhase}`)
   }
-
-  //TODO: Add the actual attack support
-  console.log(`Ignoring attack options`)
 
   const turn = await prisma.turn.update({
     data: {
@@ -379,6 +359,122 @@ async function attackTurn(res, data, player:Player) {
   return successMessage(res, updatedPlayer)
 }
 
+/**
+ * Player executes an attack against the fake player to try and gain stuff
+ * @param res 
+ * @param data 
+ * @param player 
+ */
+async function executeAttack(res, data, player:Player) {
+  console.log('executeAttack')
+
+  const playerType = Number(data.playerType)
+  const sentTroopers = Number(data.sentTroopers)
+  const sentBombers = Number(data.sentBombers)
+  const sentTanks = Number(data.sentTanks)
+
+  if (playerType <= 0) {
+    return failMessage(res, `You must select a target for your attack!`)
+  }
+
+  if (sentTroopers === 0 && sentBombers === 0 && sentTanks === 0) {
+    return failMessage(res, `At least one type of troop must be sent for the attack`)
+  }
+
+  if (sentTroopers < 0 || sentTroopers > player.troopers) {
+    return failMessage(res, `Unable to send ${sentTroopers} troopers!`)
+  }
+  if (sentBombers < 0 || sentBombers > player.bombers) {
+    return failMessage(res, `Unable to send ${sentBombers} bombers!`)
+  }
+  if (sentTanks < 0 || sentTanks > player.tanks) {
+    return failMessage(res, `Unable to send ${sentTanks} tanks!`)
+  }
+
+  //DO THE ATTACK
+  const attackResults = {
+    playerType: playerType,
+    turn: { connect: { id: player.currentTurnId } },
+    tgtPlayer: null,
+    lostTroopers: 0,
+    lostBombers: 0,
+    lostTanks: 0,
+    killedTroopers: 0,
+    killedTurrets: 0,
+    killedCarriers: 0,
+    killedBombers: 0,
+    killedTanks: 0,
+    gainedAvailLand: 0,
+    gainedCity: 0,
+    gainedAgriculture: 0,
+    gainedCoastal: 0,
+    gainedIndustrial: 0
+  }
+
+  //TODO: Make the target selection actually do something... not sure what yet
+  const defTroopers = player.troopers * (Math.random() + GAME_CONFIG.TGT_STRENGTH_BONUS)
+  console.log(`Troopers: ${defTroopers}`)
+  const defTurrets = player.bombers * (Math.random() + GAME_CONFIG.TGT_STRENGTH_BONUS)
+  console.log(`Turrets: ${defTurrets}`)
+  const defCarriers = player.tanks * (Math.random() + GAME_CONFIG.TGT_STRENGTH_BONUS)
+  console.log(`Carriers: ${defCarriers}`)
+
+  const attackStrength = sentTroopers * GAME_CONFIG.ATTACK_TROOPER +
+                         sentBombers  * GAME_CONFIG.ATTACK_BOMBER +
+                         sentTanks    * GAME_CONFIG.ATTACK_TANK
+  const defenseStrength = defTroopers * GAME_CONFIG.DEFENSE_TROOPER +
+                          defTurrets  * GAME_CONFIG.DEFENSE_TURRET +
+                          defCarriers * GAME_CONFIG.DEFENSE_CARRIER
+ 
+  //TODO: Blergh still cruft but it's something
+  let warResult = 0
+  if (attackStrength < defenseStrength) {
+    warResult = Math.random() % GAME_CONFIG.ATTACK_LOSE_LOSS
+    attackResults.killedTroopers = Math.round(defTroopers * GAME_CONFIG.ATTACK_WIN_LOSS)
+    attackResults.killedTurrets = Math.round(defTurrets * GAME_CONFIG.ATTACK_WIN_LOSS)
+    attackResults.killedCarriers = Math.round(defTurrets * GAME_CONFIG.ATTACK_WIN_LOSS)
+  } else {
+    warResult = Math.random() % GAME_CONFIG.ATTACK_WIN_LOSS
+    attackResults.killedTroopers = Math.round(defTroopers * GAME_CONFIG.ATTACK_LOSE_LOSS)
+    attackResults.killedTurrets = Math.round(defTurrets * GAME_CONFIG.ATTACK_LOSE_LOSS)
+    attackResults.killedCarriers = Math.round(defTurrets * GAME_CONFIG.ATTACK_LOSE_LOSS)
+    attackResults.gainedAvailLand = Math.round(GAME_CONFIG.TGT_LAND_CAPTURE * Math.random())
+    attackResults.gainedCity = Math.round(GAME_CONFIG.TGT_LAND_CAPTURE * Math.random())
+    attackResults.gainedCoastal = Math.round(GAME_CONFIG.TGT_LAND_CAPTURE * Math.random())
+    attackResults.gainedAgriculture = Math.round(GAME_CONFIG.TGT_LAND_CAPTURE * Math.random())
+    attackResults.gainedIndustrial = Math.round(GAME_CONFIG.TGT_LAND_CAPTURE * Math.random())
+  }
+  attackResults.lostTroopers = Math.round(sentTroopers * warResult)
+  attackResults.lostBombers = Math.round(sentBombers * warResult)
+  attackResults.lostTanks = Math.round(sentTanks * warResult)
+
+  // Store the results and kick over to the turn transition
+  const attackResult = await prisma.attack.create({ data: attackResults })
+  const updatedPlayer = await prisma.player.update({
+    data: {
+      currentTurn: { connect: { id: player.currentTurnId } },
+      lndAvailable: player.lndAvailable + attackResults.gainedAvailLand,
+      lndCoastal: player.lndCoastal + attackResults.gainedCoastal,
+      lndCity: player.lndCity + attackResults.gainedCity,
+      lndAgriculture: player.lndAgriculture + attackResults.gainedAgriculture,
+      lndIndustrial: player.lndIndustrial + attackResults.gainedIndustrial,
+      troopers: player.troopers - attackResults.killedTroopers,
+      bombers: player.bombers - attackResults.killedBombers,
+      tanks: player.tanks - attackResults.killedTanks
+    },
+    where: { id: player.id },
+    include: { currentTurn: true }
+  })
+
+  return noAttackTurn(res, data, player)
+}
+
+/**
+ * Complete the turn of the player changing the generation values if entered
+ * @param res 
+ * @param data 
+ * @param player 
+ */
 async function completeTurn(res, data, player:Player) {
   if (player.currentTurnId === 0 || player.currentTurnId === null) {
     return failMessage(res, `Turn is not currently in progress`)

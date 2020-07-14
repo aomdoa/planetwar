@@ -86,12 +86,17 @@ const getGameConfiguration = (gameId: number) => {
   return data
 }
 
+const getGameAttackData = (gameId: number) => {
+  const { data, error } = useSWR(`http://localhost:3000/api/game?id=${gameId}&action=attack`, getData)
+  return data
+}
 
 const Game : React.FC<Props> = props => {
   //Get our data for where we at
   const gameData: GameData = getGamesData(props.gameId)
   const playerData: PlayerData = getPlayerData(props.gameId)
   const gameConfig = getGameConfiguration(props.gameId)
+  const attackResult = getGameAttackData(props.gameId)
 
   const [ submitData, setSubmitData ] = useState({
     taxPaid: 0,
@@ -214,7 +219,7 @@ const Game : React.FC<Props> = props => {
       ...submitData,
       phase: phase
     })
-    if (phase === 1) {
+    if (phase === 0 || phase === 1) {
       //TODO: Fix the reload hack - going from 0 to 1 has the form broken without a reload
       window.location.reload()
     }
@@ -240,6 +245,7 @@ const Game : React.FC<Props> = props => {
       if (data.success) {
         console.log('SUCCESS')
         mutate(`http://localhost:3000/api/game?id=${gameId}`, data.result)
+        window.location.reload()
       } else {
         window.alert(data.result)
       }
@@ -372,7 +378,7 @@ const Game : React.FC<Props> = props => {
           <div>You have {playerData.availableTurns} turns available</div>
         </div>
         <div className="recentAction">
-          {actionDisplay(gameData, playerData)}
+          {actionDisplay(gameData, playerData, attackResult)}
         </div>
         <div className="currentTurn">
           {turnDisplay(gameData, playerData)}
@@ -408,7 +414,7 @@ const Game : React.FC<Props> = props => {
 
 //Displays the actions taken place this turn (but not passed)
 //TODO: Add support for displaying past turns as well
-export const actionDisplay = (gameData: GameData, turnData: PlayerData) => {
+export const actionDisplay = (gameData: GameData, turnData: PlayerData, attackResult) => {
   if (turnData.currentTurnId === null) {
     return <p>Turn not started yet...</p>
   }
@@ -444,9 +450,22 @@ export const actionDisplay = (gameData: GameData, turnData: PlayerData) => {
     builtLand.push(`${currentTurn.bldIndustrial} industrial`)
   }
 
+  let attackResults = ''
+  if (attackResult && attackResult.id) {
+    console.log('RESULT')
+    console.dir(attackResult)
+    console.log('avail is ' + attackResult.gainedAvailLand)
+    if (attackResult.gainedAvailLand > 0) {
+      attackResults = 'You WON!'
+    } else {
+      attackResults = 'You LOST!'
+    }
+  }
+
   return (
     <div>
       <ul>
+       {attackResults.length > 0 && (<li>{attackResults}</li>)}
        {builtLand.length > 0 && currentTurn.costBuild > 0 && (<li>Built {builtLand.join(', ')} for ${currentTurn.costBuild}</li>)}
        {currentTurn.increaseLand > 0 && (<li>Increased land by {currentTurn.increaseLand} for ${currentTurn.costIncrease}</li>)}
        {currentTurn.foodArmyPaid > 0 && (<li>Gave {currentTurn.foodArmyPaid} pieces of food to the army requiring {currentTurn.foodArmyReq} pieces</li>)}
